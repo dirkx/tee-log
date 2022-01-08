@@ -17,7 +17,7 @@
  * telnetserver, a webserver, syslog or MQTT.
  */
 
-#include "Log.h"
+#include "TLog.h"
 #include "TelnetSerialStream.h"
 #include <ESPmDNS.h>
 

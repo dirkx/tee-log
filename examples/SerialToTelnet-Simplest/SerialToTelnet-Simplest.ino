@@ -19,7 +19,7 @@
 
 #include <WiFi.h>       // asume a wifi internet connection
 #include <ESPmDNS.h>    // advertize our service on Zeroconf/mDNS/Bonjour
-#include <Log.h>      // The T-Logging library.
+#include <TLog.h>      // The T-Logging library.
 
 // Run a telnet service on the default port (23) which shows what is
 // sent to Serial if you telnet to it.
@@ -67,7 +67,7 @@ void setup() {
 }
 
 void loop() {
-  // take care of any Log housekeeping; such as flushing any buffers
+  // take care of any TLog.housekeeping; such as flushing any buffers
   // with log data.
   Log.loop();
 

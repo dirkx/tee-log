@@ -24,7 +24,7 @@
 #include <Print.h>
 #include <PubSubClient.h>
 
-#include <Log.h>
+#include <TLog.h>
 
 
 class MqttStream : public TLog {

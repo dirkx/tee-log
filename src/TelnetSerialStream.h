@@ -20,7 +20,7 @@
 #ifndef _H_TELNET_LOGTEE
 #define _H_TELNET_LOGTEE
 
-#include <Log.h>
+#include <TLog.h>
 
 #ifndef MAX_SERIAL_TELNET_CLIENTS
 #define MAX_SERIAL_TELNET_CLIENTS (4)

@@ -21,7 +21,7 @@
 #define _H_WEBSERVER_TEE_LOG
 
 #include <WebServer.h>
-#include <Log.h>
+#include <TLog.h>
 
 class WebSerialStream : public TLog {
   public:

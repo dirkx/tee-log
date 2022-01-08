@@ -19,7 +19,7 @@
 
 #include <WiFi.h>
 #include <ESPmDNS.h>
-#include <Log.h>
+#include <TLog.h>
 
 // Uncomment to activate syslog logging
 // #define SYSLOG_HOST "loghost.my.domain.com"
