@@ -15,6 +15,11 @@
 #include <TelnetSerialStream.h>
 TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 
+// Likewise let http://<ipaddres>:80/ show the log in a webbrowser.
+//
+#include <WebSerialStream.h>
+WebSerialStream webSerialStream = WebSerialStream();
+
 // Only send it to syslog if we have a host defined.
 //
 #ifdef SYSLOG_HOST
@@ -37,6 +42,7 @@ void setup() {
   Serial.println("Started (this will only show up on serial)");
 
   Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
+  Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
 
   WiFi.begin(WIFI_NETWORK, WIFI_PASSWD);
   while(!WiFi.isConnected()) {
@@ -69,7 +75,7 @@ void setup() {
   Log.println("We are done setting up");
 
   // Call mDNS to make our serial-2-telnet service visible and easy to find.
-  MDNS.begin("my name");
+  MDNS.begin("chatty-server");
 }
 
 void loop() {

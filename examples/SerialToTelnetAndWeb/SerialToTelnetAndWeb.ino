@@ -38,9 +38,9 @@ void loop() {
   // with log data.
   Log.loop();
 
-  // Say something every 5 seconds.
+  // Say something every seconds.
   static unsigned  long last_report = millis();
-  if (millis() - last_report < 5 * 1000)
+  if (millis() - last_report < 1 * 1000)
     return;
 
   static int i = 0;
