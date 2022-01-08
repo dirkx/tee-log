@@ -13,6 +13,6 @@ class WebSerialStream : public TLog {
     uint16_t _webPort;
     WebServer * _server = NULL;
     uint8_t _buff[1024];
-    int _at = 0;
+    unsigned long _at = 0;
   protected:
 };

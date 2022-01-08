@@ -3,11 +3,8 @@
 #include <ESPmDNS.h>
 
 size_t WebSerialStream::write(uint8_t c) {
-  if (_at>=sizeof(_buff)-1) {
-        _at = sizeof(_buff)/2;
-	memcpy(_buff, _buff-_at, _at);
-  };
-  _buff[_at++] = c;
+  _buff[_at % sizeof(_buff)] = c;
+  _at++;
   return 1;
 }
 
@@ -31,7 +28,11 @@ void WebSerialStream::begin() {
                 "then("
 		   "r => { return r.json(); }"
                 ").then( "
-                   "j => { document.getElementById('log').innerHTML += j.buff; at= j.at; st(); }"
+                   "j => { document.getElementById('log').innerHTML += j.buff; "
+                          "at= j.at; "
+                          "window.scrollTo(0,document.body.scrollHeight); "
+ 			  "st(); "
+                   "}"
 		").catch( e => { console.log(e); st(); } "
                 ");"
         "};"
@@ -45,8 +46,19 @@ void WebSerialStream::begin() {
        return;
     };
     unsigned long prevAt= _server->arg("at").toInt();
-    if (prevAt > _at) prevAt = _at; // reset browsers from the future (e.g. after a reset)
     String out = "{\"at\":" + String(_at) + ",\"buff\":\"";
+
+    // reset browsers from the future (e.g. after a reset)
+    if (prevAt > _at) {
+        out += "<font color=red><hr><i>.. log reset..</i></font><hr>";
+    	prevAt = _at;
+    };
+    if (_at > sizeof(_buff) && prevAt < _at - sizeof(_buff)) {
+        out += "<font color=red><hr><i>.. skipping " + 
+		String(_at - sizeof(_buff) - prevAt) +
+		" bytes of log - no longer in buffer ..</i><hr></font>";
+	prevAt = _at - sizeof(_buff);
+    };
     for(;prevAt != _at; prevAt++) {
        char c = _buff[prevAt % sizeof(_buff)];
        switch(c) {
