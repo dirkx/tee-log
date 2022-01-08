@@ -25,21 +25,43 @@ void WebSerialStream::begin() {
 		"#log { font-family: 'Courier New', monospace; white-space: pre; }"
 	"</style>"
 	"<script language=javascript>"
-	"window.onLoad = setInterval(function () { fetch('log')."
+        "var at = 0;"
+	"function st() { setTimeout(750, f()); };"
+	"function f() { fetch('log?at='+at)."
                 "then("
-		   "function(r) { return r.text() }"
+		   "r => { return r.json(); }"
                 ").then( "
-                   "function(txt) { document.getElementById('log').innerHTML += txt; }"
-		")}, 750);"
+                   "j => { document.getElementById('log').innerHTML += j.buff; at= j.at; st(); }"
+		").catch( e => { console.log(e); st(); } "
+                ");"
+        "};"
+        "window.onLoad = f();"
 	"</script>"
 	"<body><div id=log></div></body></html>");
   });
   _server->on("/log",[this]() {
-    _buff[_at] = 0;
-    _server->send(200, "text/plain",String((const char*)_buff));
-	return json with at and payload; rely on browser to give at; at is size_t and done modulo.
-
-    _at = 0; // just one...
+    if (!_server->hasArg("at")) {
+       _server->send(400, "text/plain", "Missing at argument.");
+       return;
+    };
+    unsigned long prevAt= _server->arg("at").toInt();
+    if (prevAt > _at) prevAt = _at; // reset browsers from the future (e.g. after a reset)
+    String out = "{\"at\":" + String(_at) + ",\"buff\":\"";
+    for(;prevAt != _at; prevAt++) {
+       char c = _buff[prevAt % sizeof(_buff)];
+       switch(c) {
+       case '\b': out += "\\b"; break;
+       case '\n': out += "\\n"; break;
+       case '\r': out += "\\r"; break;
+       case '\f': out += "\\f"; break;
+       case '\t': out += "\\t"; break;
+       case '"' : out += "\\\""; break;
+       case '\\': out += "\\\\"; break;
+       default  : out += c; break;
+       };
+    };
+    out += "\"}";
+    _server->send(200, "application/json", out);
   });
   _server->begin();
 

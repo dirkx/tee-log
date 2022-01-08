@@ -39,7 +39,7 @@ void TelnetSerialStream::begin() {
   for (int i = 0; i < _maxClients; i++)
     _serverClients[i] = NULL;
 
-  Log.printf("Opened serial telnet server on %s %s:%d\n", identifier().c_str(), WiFi.localIP().toString().c_str(), _telnetPort);
+  Log.printf("Opened serial server on telnet://%s:%d\n", WiFi.localIP().toString().c_str(), _telnetPort);
   MDNS.addService("telnet", "tcp", _telnetPort);
 };
 

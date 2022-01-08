@@ -1,12 +1,5 @@
-// Simple 'tee' class - that sends all 'serial' port data also to the TelnetSerial and/or MQTT bus -
-// to the 'log' topic if such is possible/enabled.
-//
-// XXX should refactor in a generic buffered 'add a Stream' class and then
-// make the various destinations classes in their own right you can 'add' to the T.
-//
-//
-#include "Log.h"
 #include <WebServer.h>
+#include "Log.h"
 
 class WebSerialStream : public TLog {
   public:
@@ -16,7 +9,6 @@ class WebSerialStream : public TLog {
     virtual void begin();
     virtual void loop();
     virtual void stop();
-
   private:
     uint16_t _webPort;
     WebServer * _server = NULL;
