@@ -36,6 +36,7 @@ public:
     String identifier() { return _identifier; };
     void setIdentifier(String identifier) { _identifier = identifier; };
     virtual void begin() { return; };
+    virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
 
@@ -59,7 +60,6 @@ class TLog : public LOGBase
       for (auto it = handlers.begin(); it != handlers.end(); ++it) {
         (*it)->begin();
       }
-      MDNS.begin();
     };
     virtual void loop() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {

@@ -23,18 +23,32 @@
 #include "MqttlogStream.h"
 
 void MqttStream::begin() {
-  if (!_mqttServer || !_mqttTopic || !_mqttPort) {
-    Log.printf("Missing%s for MQTT Logging\n",
-               _mqttServer ? "" : " server", _mqttTopic ? "" : " topic", _mqttPort ? "" : " port");
-    return;
-  }
+  if (!_mqtt) {
+     if (!_mqttServer || !_mqttTopic || !_mqttPort) {
+       Log.printf("Missing%s%s%s for MQTT Logging\n", 
+                  _mqttServer ? "" : " server", _mqttTopic ? "" : " topic", _mqttPort ? "" : " port" );
+       return;
+     }
   
-  PubSubClient * psc = new PubSubClient(*_client);
-  psc->setServer(_mqttServer, _mqttPort);
-  psc->connect(_mqttTopic);
-  psc->setBufferSize(sizeof(logbuff)+9+strlen(_mqttTopic));
-  _mqtt = psc;
+     PubSubClient * psc = new PubSubClient(*_client);
+     psc->setServer(_mqttServer, _mqttPort);
+     psc->setBufferSize(sizeof(logbuff)+9+strlen(_mqttTopic));
+   
+     Log.printf("Opened log on mqtt:://%s:%d/%s\n", _mqttServer, _mqttPort, _mqttTopic);
+     _mqtt = psc;
+     _mqtt->connect(_identifier.c_str());
+  } else {
+     if (!_mqttTopic) {
+       Log.printf("Missing topic for MQTT Logging\n");
+       return;
+     };
+     Log.printf("Opened mqtt log on topic %s\n", _mqttTopic);
+  };
+  reconnect();
   loop();
+}
+
+void MqttStream::reconnect() {
 }
 
 void MqttStream::loop() {
@@ -42,28 +56,34 @@ void MqttStream::loop() {
   if (!_mqtt)
     return;
 
+  // When we do not have the client handle - we're sharing a connection
+  // with something else. Let that take the lead.
+  if (!_client) 
+    return;
+
   _mqtt->loop();
+
   if (_mqtt->connected()) 
     return;
 
   if (lst && millis() - lst < 15000)
     return;
 
-  Log.printf("MQTT connection state: %d (not connected)\n", _mqtt->state());
+  Log.printf("Log::MQTT connection state: %d (not connected)\n", _mqtt->state());
 
   if (_mqtt->connect(_mqttTopic)) {
-    Log.println("(re)connecting to MQTT");
+    Log.println("Log:: (re)connecting to MQTT");
     lst = 0;
     return;
   };
 
-  Log.println("MQTT (re)connection failed. Will retry");
+  Log.println("Log:: MQTT (re)connection failed. Will retry");
   lst = millis();
 }
 
 size_t MqttStream::write(uint8_t c) {
   if (at >= sizeof(logbuff) - 1) {
-    Log.println("Purged logbuffer (should never happen)");
+    Serial.println("Purged logbuffer (should never happen)");
     at = 0;
   };
 
@@ -73,9 +93,8 @@ size_t MqttStream::write(uint8_t c) {
   if (c == '\n' || at >= sizeof(logbuff) - 1) {
     logbuff[at++] = 0;
     at = 0;
-
     // perhaps we should buffer this - and do this in the main loop().
-    if (_mqtt) {
+    if (_mqtt && _mqtt->connected()) {
       if (_mqttTopic == NULL)
         _mqtt->publish("debug", logbuff);
       else

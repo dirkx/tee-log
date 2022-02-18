@@ -29,8 +29,15 @@
 
 class MqttStream : public TLog {
   public:
-    MqttStream(Client * client, const char * mqttServer = NULL, const char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
-      _client(client), _mqttServer(mqttServer), _mqttTopic(mqttTopic), _mqttPort(mqttPort) {
+    MqttStream(Client * client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
+      _client(client), _mqttPort(mqttPort) {
+      if (mqttServer) _mqttServer = strndup(mqttServer);
+      if (mqttTopic) _mqttTopic = strndup(mqttTopic);
+    };
+    MqttStream(PubSubClient * pubsub, char * mqttTopic = NULL) :
+      _mqtt(pubsub) {
+      if (mqttTopic) _mqttTopic = strdup(mqttTopic);
+      _client = NULL; // used to detect the case where we're not resposible for the connection.
     };
 
     void setPort(uint16_t port) {
@@ -50,12 +57,13 @@ class MqttStream : public TLog {
     virtual size_t write(uint8_t c);
     virtual void begin();
     virtual void loop();
+    virtual void reconnect();
 
   private:
-    Client * _client;
+    Client * _client = NULL;
     PubSubClient * _mqtt = NULL;
-    const char * _mqttServer, * _mqttTopic;
-    uint16_t _mqttPort;
+    const char * _mqttServer = NULL, * _mqttTopic = NULL;
+    uint16_t _mqttPort = 0;
     char logbuff[512];
     size_t at = 0;
   protected:
