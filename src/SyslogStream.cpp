@@ -36,7 +36,7 @@ size_t SyslogStream::write(uint8_t c) {
     logbuff[at++] = 0;
     at = 0;
 
-    {
+    if (_logging) {
       WiFiUDP syslog;
 
       if (syslog.begin(_syslogPort)) {

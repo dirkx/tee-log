@@ -60,8 +60,8 @@ class TLog : public LOGBase
       }
     };
     virtual void loop() {
-      for (auto it = handlers.begin(); it != handlers.end(); ++it) {
-        (*it)->loop();
+        for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+          (*it)->loop();
       }
     };
     virtual void stop() {

@@ -19,5 +19,5 @@
 
 #include "TLog.h"
 
-TLog Log;
+TLog Log, Debug;
 
