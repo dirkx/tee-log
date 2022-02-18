@@ -87,17 +87,17 @@ void TelnetSerialStream::loop() {
 
         _serverClients[i] = new WiFiClient(_server->available());
 
-        Log.print(_serverClients[i]->remoteIP());
-        Log.print(":");
-        Log.print(_serverClients[i]->remotePort());
-        Log.println(" connected by teln et");
-
         _serverClients[i]->print("Telnet connection");
         if (identifier().length()) {
 	        _serverClients[i]->print(" to ");
 	        _serverClients[i]->print(identifier());
 	};
         _serverClients[i]->println();
+
+        Log.print(_serverClients[i]->remoteIP());
+        Log.print(":");
+        Log.print(_serverClients[i]->remotePort());
+        Log.println(" connected by telnet");
 
         break;
       };

@@ -26,6 +26,7 @@
 #include <functional>
 
 #include <WiFi.h>
+#include <ESPmDNS.h>
 
 #define REPORT_INTERVAL (10*60*1000)
 
@@ -58,6 +59,7 @@ class TLog : public LOGBase
       for (auto it = handlers.begin(); it != handlers.end(); ++it) {
         (*it)->begin();
       }
+      MDNS.begin();
     };
     virtual void loop() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {
