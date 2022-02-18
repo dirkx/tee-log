@@ -31,8 +31,8 @@ class MqttStream : public TLog {
   public:
     MqttStream(Client * client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
       _client(client), _mqttPort(mqttPort) {
-      if (mqttServer) _mqttServer = strndup(mqttServer);
-      if (mqttTopic) _mqttTopic = strndup(mqttTopic);
+      if (mqttServer) _mqttServer = strdup(mqttServer);
+      if (mqttTopic) _mqttTopic = strdup(mqttTopic);
     };
     MqttStream(PubSubClient * pubsub, char * mqttTopic = NULL) :
       _mqtt(pubsub) {
