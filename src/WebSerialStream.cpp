@@ -84,6 +84,8 @@ void WebSerialStream::begin() {
     for(;prevAt != _at; prevAt++) {
        char c = _buff[prevAt % sizeof(_buff)];
        switch(c) {
+       case '<': out += "&lt;"; break;
+       case '>': out += "&gt;"; break;
        case '\b': out += "\\b"; break;
        case '\n': out += "\\n"; break;
        case '\r': out += "\\r"; break;
