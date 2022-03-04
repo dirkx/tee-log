@@ -16,9 +16,12 @@
  * not just got to the serial port; but also to a configurable mix of a
  * telnetserver, a webserver, syslog or MQTT.
  */
+#ifndef WIFI_NETWORK
+#warning "You really want to change this !"
+#define WIFI_NETWORK "MyWiFiNetwork"
+#define WIFI_PASSWD "MySecretPassword"
+#endif
 
-#include <WiFi.h>
-#include <ESPmDNS.h>
 #include <TLog.h>
 
 // Uncomment to activate syslog logging

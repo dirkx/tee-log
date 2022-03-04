@@ -17,8 +17,12 @@
  * telnetserver, a webserver, syslog or MQTT.
  */
 
-#include <WiFi.h>       // asume a wifi internet connection
-#include <ESPmDNS.h>    // advertize our service on Zeroconf/mDNS/Bonjour
+#ifndef WIFI_NETWORK
+#warning "You really want to change this !"
+#define WIFI_NETWORK "MyWiFiNetwork"
+#define WIFI_PASSWD "MySecretPassword"
+#endif
+
 #include <TLog.h>      // The T-Logging library.
 
 // Run a telnet service on the default port (23) which shows what is
