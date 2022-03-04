@@ -20,8 +20,21 @@
 #ifndef _H_WEBSERVER_TEE_LOG
 #define _H_WEBSERVER_TEE_LOG
 
-#include <WebServer.h>
 #include <TLog.h>
+
+#ifdef ESP32
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WebServer.h>
+#endif
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+typedef ESP8266WebServer WebServer;
+#endif
+
 
 class WebSerialStream : public TLog {
   public:

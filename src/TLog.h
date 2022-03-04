@@ -25,8 +25,16 @@
 #include <vector>
 #include <functional>
 
+#ifdef ESP32
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#endif
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#include <WiFiUdp.h>
+#endif
 
 #define REPORT_INTERVAL (10*60*1000)
 

@@ -19,7 +19,6 @@
 
 #include "TLog.h"
 #include "WebSerialStream.h"
-#include <ESPmDNS.h>
 
 size_t WebSerialStream::write(uint8_t c) {
   _buff[_at % sizeof(_buff)] = c;

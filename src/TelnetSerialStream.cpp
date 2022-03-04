@@ -19,7 +19,6 @@
 
 #include "TLog.h"
 #include "TelnetSerialStream.h"
-#include <ESPmDNS.h>
 
 size_t TelnetSerialStream::write(uint8_t c) {
   if (!_server)
@@ -129,8 +128,9 @@ void TelnetSerialStream::loop() {
 
     while (_serverClients[i]->available()) {
       unsigned char c = _serverClients[i]->read();
-      // if (c > 0 && c < 32)
+      if (c > 0 && c < 32) {
         // Serial.println("Ignoring telnet input");
+      };
     };
   }
 }
