@@ -32,4 +32,10 @@ sends the logging output to a syslog server; to MQTT or to a webserver. In that 
 you can simply open a webbrowser and connect to http://10.0.0.2 (i.e. to the IP address
 of the EPS32) and see the output scroll.
 
+Note that you can still stream to the indivudal loggers; e.g. in above example
+
+        telnetSerialStream.println("Telnet only");
+
+works too.
+
 It is used at the https://makerspaceleiden.nl/ for its door access: https://github.com/makerspaceleiden.
