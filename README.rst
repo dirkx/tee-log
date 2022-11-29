@@ -36,6 +36,6 @@ Note that you can still stream to the indivudal loggers; e.g. in above example
 
         telnetSerialStream.println("Telnet only");
 
-works too.
+works too. Or see the Serial1/Serial2 example.
 
 It is used at the https://makerspaceleiden.nl/ for its door access: https://github.com/makerspaceleiden.
