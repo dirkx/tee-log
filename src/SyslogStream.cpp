@@ -20,6 +20,8 @@
 #include "TLog.h"
 #include "SyslogStream.h"
 
+#if (defined(ESP32) || defined(ESP8266))
+
 size_t SyslogStream::write(uint8_t c) {
 
   if (at >= sizeof(logbuff) - 1) {
@@ -55,11 +57,7 @@ size_t SyslogStream::write(uint8_t c) {
             p += 4; // See section 4.1.2 of RFC 4164
             p[strlen(p) - 1] = 0;
           };
-#ifdef ESP32
-          syslog.printf("<135> %s %s %s", p, identifier(), logbuff);
-#else
           syslog.printf("<135> %s %s %s", p, identifier().c_str(), logbuff);
-#endif
         };
         syslog.endPacket();
       };
@@ -67,3 +65,4 @@ size_t SyslogStream::write(uint8_t c) {
   };
   return 1;
 }
+#endif

@@ -20,6 +20,10 @@
 #ifndef _H_LOG_TEE
 #define _H_LOG_TEE
 
+#include <Arduino.h>
+#include <String.h>
+#include <Print.h>
+
 #include <stddef.h>
 #include <memory>
 #include <vector>
@@ -28,19 +32,23 @@
 #ifdef ESP32
 #include <WiFi.h>
 #include <ESPmDNS.h>
+#define IDENTIFIER_GENERATOR (WiFi.macAddress())
 #endif
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
+#define IDENTIFIER_GENERATOR (WiFi.macAddress())
 #endif
 
-#define REPORT_INTERVAL (10*60*1000)
+#ifndef IDENTIFIER_GENERATOR
+#define IDENTIFIER_GENERATOR "unknown"
+#endif
 
 class LOGBase : public Print {
 public:
-    LOGBase(String identifier = WiFi.macAddress()) : _identifier(identifier) {};
+    LOGBase(String identifier = IDENTIFIER_GENERATOR) : _identifier(identifier) {};
     String identifier() { return _identifier; };
     void setIdentifier(String identifier) { _identifier = identifier; };
     virtual void begin() { return; };
@@ -68,6 +76,7 @@ class TLog : public LOGBase
       for (auto it = handlers.begin(); it != handlers.end(); ++it) {
         (*it)->begin();
       }
+      // MDNS.begin();
     };
     virtual void loop() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {

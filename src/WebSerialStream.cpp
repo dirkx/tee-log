@@ -20,6 +20,8 @@
 #include "TLog.h"
 #include "WebSerialStream.h"
 
+#if (defined(ESP32) || defined(ESP8266))
+
 size_t WebSerialStream::write(uint8_t c) {
   _buff[_at % sizeof(_buff)] = c;
   _at++;
@@ -116,3 +118,4 @@ void WebSerialStream::loop() {
   if (_server)
  	_server->handleClient();
 }
+#endif

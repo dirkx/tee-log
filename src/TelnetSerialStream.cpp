@@ -20,6 +20,8 @@
 #include "TLog.h"
 #include "TelnetSerialStream.h"
 
+#if (defined(ESP32) || defined(ESP8266))
+
 size_t TelnetSerialStream::write(uint8_t c) {
   if (!_server)
     return 1;
@@ -29,6 +31,17 @@ size_t TelnetSerialStream::write(uint8_t c) {
     };
   };
   return 1;
+}
+
+size_t TelnetSerialStream::write(uint8_t * c, size_t s) {
+  if (!_server)
+    return 1;
+  for (int i = 0; i < _maxClients; i++) {
+    if (_serverClients[i] && _serverClients[i]->connected()) {
+      _serverClients[i]->write(c,s);
+    };
+  };
+  return s;
 }
 
 TelnetSerialStream::~TelnetSerialStream() {
@@ -134,3 +147,4 @@ void TelnetSerialStream::loop() {
     };
   }
 }
+#endif

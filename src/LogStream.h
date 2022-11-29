@@ -17,32 +17,25 @@
  * telnetserver, a webserver, syslog or MQTT.
  */
 
-#ifndef _H_TELNET_LOGTEE
-#define _H_TELNET_LOGTEE
-#if (defined(ESP32) || defined(ESP8266))
+#ifndef _H_TELNET_LOGSTREAM
+#define _H_TELNET_LOGSTREAM
 
 #include <TLog.h>
+#include <Stream.h>
 
-#ifndef MAX_SERIAL_TELNET_CLIENTS
-#define MAX_SERIAL_TELNET_CLIENTS (4)
-#endif
-
-class TelnetSerialStream : public TLog {
+class LogStream : public TLog {
   public:
-    TelnetSerialStream(const uint16_t telnetPort = 23, const uint16_t maxClients = MAX_SERIAL_TELNET_CLIENTS) : _telnetPort(telnetPort), _maxClients(maxClients) {};
-    ~TelnetSerialStream();
-    virtual size_t write(uint8_t c);
-    virtual size_t write(uint8_t * buff, size_t len);
-    virtual void begin();
-    virtual void loop();
-    virtual void stop();
+    LogStream();
+    LogStream(Stream &s) : _s(&s) {};
+
+    void begin() {};
+    void begin(Stream &s) { _s = &s; };
+
+    void loop() {};
+    void stop() {};
 
   private:
-    uint16_t _telnetPort, _maxClients;
-    WiFiServer * _server = NULL;
-    WiFiClient ** _serverClients;
+    Stream * _s;
   protected:
 };
 #endif
-#endif
-

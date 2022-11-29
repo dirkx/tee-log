@@ -21,11 +21,11 @@
 #ifndef _H_MqttStream
 #define _H_MqttStream
 
-#include <Print.h>
-#include <PubSubClient.h>
-
 #include <TLog.h>
 
+#include <Print.h>
+#if (defined(ESP32) || defined(ESP8266))
+#include <PubSubClient.h>
 
 class MqttStream : public TLog {
   public:
@@ -68,4 +68,5 @@ class MqttStream : public TLog {
     size_t at = 0;
   protected:
 };
+#endif
 #endif

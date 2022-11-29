@@ -18,9 +18,10 @@
  */
 
 #include "TLog.h"
-
-#include <PubSubClient.h>
 #include "MqttlogStream.h"
+
+#if (defined(ESP32) || defined(ESP8266))
+#include <PubSubClient.h>
 
 void MqttStream::begin() {
   if (!_mqtt) {
@@ -105,3 +106,4 @@ size_t MqttStream::write(uint8_t c) {
   };
   return 1;
 }
+#endif
