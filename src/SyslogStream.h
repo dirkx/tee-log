@@ -27,13 +27,22 @@ class SyslogStream : public TLog {
   public:
     SyslogStream(const uint16_t syslogPort = 514) : _syslogPort(syslogPort) {};
     void setPort(uint16_t port) { _syslogPort = port; }
-    void setDestination(const char * dest) { _dest = dest; }
+    void setDestination(const char * dest) {
+      _destHost = dest;
+      _useIpDestination = false;
+    }
+    void setDestination(IPAddress dest) {
+      _destIp = dest;
+      _useIpDestination = true;
+    }
     void setRaw(bool raw) { _raw = raw; }
     virtual size_t write(uint8_t c);
     virtual void begin() { _logging = true; }
     virtual void end() { _logging = false; }
   private:
-    const char * _dest;
+    const char * _destHost;
+    IPAddress _destIp;
+    bool _useIpDestination = false;
     uint16_t _syslogPort;
     char logbuff[512]; // 1024 seems to be to large for some syslogd's.
     size_t at = 0;
