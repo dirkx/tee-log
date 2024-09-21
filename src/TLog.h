@@ -21,7 +21,6 @@
 #define _H_LOG_TEE
 
 #include <Arduino.h>
-#include <String.h>
 #include <Print.h>
 
 #include <stddef.h>
