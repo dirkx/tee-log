@@ -26,6 +26,11 @@
 #include <Print.h>
 #if (defined(ESP32) || defined(ESP8266))
 #include <PubSubClient.h>
+#include <list>
+
+#ifndef MAX_MQTT_QUEUE
+#define MAX_MQTT_QUEUE (30)
+#endif
 
 class MqttStream : public TLog {
   public:
@@ -64,8 +69,10 @@ class MqttStream : public TLog {
     PubSubClient * _mqtt = NULL;
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
-    char logbuff[512];
+    char logbuff[300];
+    std::list<String> queue;
     size_t at = 0;
+   
   protected:
 };
 #endif

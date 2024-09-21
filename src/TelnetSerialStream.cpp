@@ -52,6 +52,10 @@ TelnetSerialStream::~TelnetSerialStream() {
 void TelnetSerialStream::begin() {
   if (_server != NULL)
     return;
+
+  if (!_hostname)
+	_hostname = WiFi.getHostname();
+
   _server = new WiFiServer(_telnetPort);
   _server->begin();
   _serverClients = (WiFiClient **)malloc(sizeof(WiFiClient *) * _maxClients);
@@ -99,10 +103,14 @@ void TelnetSerialStream::loop() {
 
         _serverClients[i] = new WiFiClient(_server->available());
 
-        _serverClients[i]->print("Telnet connection");
+        _serverClients[i]->print("Telnet connection ");
         if (identifier().length()) {
-	        _serverClients[i]->print(" to ");
+	        _serverClients[i]->print(" ");
 	        _serverClients[i]->print(identifier());
+	};
+        if(_hostname) {
+	        _serverClients[i]->print(" ");
+		_serverClients[i]->print(_hostname);
 	};
         _serverClients[i]->println();
 

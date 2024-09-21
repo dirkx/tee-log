@@ -29,6 +29,7 @@
 
 class TelnetSerialStream : public TLog {
   public:
+    TelnetSerialStream(String hostname, const uint16_t telnetPort = 23, const uint16_t maxClients = MAX_SERIAL_TELNET_CLIENTS) : _hostname(hostname), _telnetPort(telnetPort), _maxClients(maxClients) {};
     TelnetSerialStream(const uint16_t telnetPort = 23, const uint16_t maxClients = MAX_SERIAL_TELNET_CLIENTS) : _telnetPort(telnetPort), _maxClients(maxClients) {};
     ~TelnetSerialStream();
     virtual size_t write(uint8_t c);
@@ -41,6 +42,7 @@ class TelnetSerialStream : public TLog {
     uint16_t _telnetPort, _maxClients;
     WiFiServer * _server = NULL;
     WiFiClient ** _serverClients;
+    String _hostname = "";
   protected:
 };
 #endif
