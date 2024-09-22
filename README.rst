@@ -15,10 +15,21 @@ Example:
 
 		... start wifi network ...
 
+                Serial.print("From this point onward; telnet to ");
+                Serial.print(WiFi.localIP());
+                Serial.println(" to see the logging.");
+
   		Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
 		Log.begin();
 
 		Log.println("Hello World");
+
+
+        void loop() {
+                 // take care of any TLog.housekeeping; such as flushing any buffers
+                 // with log data.
+                 Log.loop();
+  
 
 With this setup; the output "Hello World" is visible both on the Serial port; as well as on 
 a local telnet server. So doing a telnet to the ESP32; will show this:
