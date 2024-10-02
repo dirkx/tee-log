@@ -32,7 +32,7 @@
 #define MAX_MQTT_QUEUE (30)
 #endif
 
-class MqttStream : public TLog {
+class MqttStream : public LOGBase {
   public:
     MqttStream(Client * client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
       _client(client), _mqttPort(mqttPort) {

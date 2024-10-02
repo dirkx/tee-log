@@ -37,7 +37,7 @@ void MqttStream::begin() {
         
         Log.printf("Opened log on mqtt:://%s:%d/%s\n", _mqttServer, _mqttPort, _mqttTopic);
         _mqtt = psc;
-        _mqtt->connect(_identifier.c_str());
+        _mqtt->connect(_identifier);
     } else {
         if (!_mqttTopic) {
             Log.printf("Missing topic for MQTT Logging\n");

@@ -37,7 +37,7 @@ typedef ESP8266WebServer WebServer;
 #endif
 
 
-class WebSerialStream : public TLog {
+class WebSerialStream : public LOGBase {
   public:
     WebSerialStream(const uint16_t webPort = 80) : _webPort(webPort) {};
     ~WebSerialStream();

@@ -27,7 +27,7 @@
 #define MAX_SERIAL_TELNET_CLIENTS (4)
 #endif
 
-class TelnetSerialStream : public TLog {
+class TelnetSerialStream : public LOGBase {
   public:
     TelnetSerialStream(String hostname, const uint16_t telnetPort = 23, const uint16_t maxClients = MAX_SERIAL_TELNET_CLIENTS) : _hostname(hostname), _telnetPort(telnetPort), _maxClients(maxClients) {};
     TelnetSerialStream(const uint16_t telnetPort = 23, const uint16_t maxClients = MAX_SERIAL_TELNET_CLIENTS) : _telnetPort(telnetPort), _maxClients(maxClients) {};

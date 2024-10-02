@@ -23,7 +23,7 @@
 #include <Print.h>
 #include <TLog.h>
 
-class SyslogStream : public TLog {
+class SyslogStream : public LOGBase {
   public:
     SyslogStream(const uint16_t syslogPort = 514) : _syslogPort(syslogPort) {};
     void setPort(uint16_t port) { _syslogPort = port; }

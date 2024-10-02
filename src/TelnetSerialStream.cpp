@@ -105,11 +105,11 @@ void TelnetSerialStream::loop() {
 
         _serverClients[i]->print("Telnet connection ");
         if (identifier().length()) {
-	        _serverClients[i]->print(" ");
+	        _serverClients[i]->print(" to ");
 	        _serverClients[i]->print(identifier());
 	};
         if(_hostname) {
-	        _serverClients[i]->print(" ");
+	        _serverClients[i]->print(" @ ");
 		_serverClients[i]->print(_hostname);
 	};
         _serverClients[i]->println();
