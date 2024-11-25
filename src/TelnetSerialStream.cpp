@@ -104,9 +104,9 @@ void TelnetSerialStream::loop() {
         _serverClients[i] = new WiFiClient(_server->available());
 
         _serverClients[i]->print("Telnet connection ");
-        if (identifier().length()) {
+        if (_identifier && _identifier[0]) {
 	        _serverClients[i]->print(" to ");
-	        _serverClients[i]->print(identifier());
+	        _serverClients[i]->print(_identifier);
 	};
         if(_hostname) {
 	        _serverClients[i]->print(" @ ");

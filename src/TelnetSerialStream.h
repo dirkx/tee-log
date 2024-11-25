@@ -39,10 +39,10 @@ class TelnetSerialStream : public LOGBase {
     virtual void stop();
 
   private:
+    String _hostname = "";
     uint16_t _telnetPort, _maxClients;
     WiFiServer * _server = NULL;
     WiFiClient ** _serverClients;
-    String _hostname = "";
   protected:
 };
 #endif

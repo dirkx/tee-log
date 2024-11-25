@@ -47,16 +47,17 @@
 
 class LOGBase : public Print {
 public:
-    LOGBase(const char * identifier = IDENTIFIER_GENERATOR) : _identifier(identifier) {};
-    String identifier() { return _identifier; };
-    void setIdentifier(const char * identifier) { _identifier = identifier; };
+    LOGBase(const char * identifier = IDENTIFIER_GENERATOR) : _identifier(strdup(identifier)) {};
+    ~LOGBase() { if (_identifier) free(_identifier); };
+    String identifier() { return String(_identifier); };
+    void setIdentifier(const char * identifier) { if (_identifier) free(_identifier); _identifier = strdup(identifier); };
     virtual void begin() { return; };
     virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
     
 protected:
-    const char * _identifier;
+    char * _identifier;
 };
 
 class TLog : public LOGBase
