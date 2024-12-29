@@ -64,15 +64,19 @@ void MqttStream::loop() {
     
     _mqtt->loop();
     if (_mqtt->connected()) {
-        auto it = queue.begin();
-        while (it != queue.end()) {
-            _mqtt->publish(_mqttTopic ? _mqttTopic : "debug", it->c_str());
-	    _mqtt->loop();
-            queue.erase(it++);
+        auto it = unsent.begin();
+	int i = 0;
+        while (it != unsent.end() && i++ < MAX_MQTT_SENT) {
+	    String s = String(*it);
+            unsent.erase(it++);
+	    // Remove the final LF - as MQTT is line oriented on message
+	    // level; and will usually show each message as a line.
+	    if (s.endsWith("\n")) s.remove(s.length()-1,1);
+            _mqtt->publish(_mqttTopic ? _mqttTopic : "debug", s.c_str()); // it->c_str());
         };
         return;
     };
-    
+
     // When we do not have the client handle - we're sharing a connection
     // with something else. So no need to try to (re)connect, etc.
     if (!_client)
@@ -86,32 +90,12 @@ void MqttStream::loop() {
 }
 
 void MqttStream::emitLastLine(String s) {
-    // Silently purge entries.
-    while(queue.size() >= MAX_MQTT_QUEUE)
-            queue.erase(queue.begin());
-
-    queue.push_back(s);
+    if (unsent.size() < MAX_MQTT_QUEUE)
+    	unsent.push_back(s);
 }
 
 size_t MqttStream::write(uint8_t c) {
-#if 0
-    if (at >= sizeof(logbuff)) {
-        Serial.println("Purged logbuffer (should never happen)");
-        at = 0;
-    };
-    
-    if (c >= 32 && c < 128)
-        logbuff[ at++ ] = c;
-    
-    if (c == '\n' || at >= sizeof(logbuff) - 1) {
-        logbuff[at++] = 0;
-        at = 0;
-        // Silently purge entries.
-        while(queue.size() >= MAX_MQTT_QUEUE)
-            queue.erase(queue.begin());
-        queue.push_back(String(logbuff));
-    };
-#endif
+    // Ignore partial writes; wait for a full line before sending it.
     return 1;
 }
 #endif

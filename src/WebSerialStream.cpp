@@ -34,7 +34,8 @@ class AsyncWebSocketWithData : public AsyncWebSocket {
 
 
 void WebSerialStream::emitLastLine(String line) {
-	_ws->textAll(line);
+	if (_ws && _ws->count())
+		_ws->textAll(line);
 };
 
 size_t WebSerialStream::write(uint8_t c) {
@@ -46,7 +47,7 @@ WebSerialStream::~WebSerialStream() {
 }
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  LOGBase* me = (LOGBase*)(((AsyncWebSocketWithData*)server)->data());
+  WebSerialStream * me = (WebSerialStream*)(((AsyncWebSocketWithData*)server)->data());
 
   switch (type) {
     case WS_EVT_CONNECT:
@@ -79,14 +80,44 @@ void WebSerialStream::begin() {
 	_ws = new AsyncWebSocketWithData(_prefix + "/ws");
 
   _ws->setData(this);
+#if 1
   _ws->onEvent(onEvent);
+#else
+  _ws->onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  WebSerialStream * me = (WebSerialStream*)(((AsyncWebSocketWithData*)server)->data());
+
+  switch (type) {
+    case WS_EVT_CONNECT:
+      me->_connected++;
+      break;
+    case WS_EVT_DISCONNECT:
+      me->_connected--;
+      break;
+    case WS_EVT_DATA: {
+          AwsFrameInfo *info = (AwsFrameInfo*)arg;
+          if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+                data[len] = 0;
+                if (strcmp((char*)data, "getHistory") == 0) {
+                        client->text(me->history());
+                }
+          }
+      }
+      break;
+    case WS_EVT_PONG:
+    case WS_EVT_ERROR:
+      break;
+  }
+});
+#endif
+
   _server->addHandler(_ws);
 
-  _server->on(String(_prefix+"/").c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
-     size_t len = strlen(page) + _prefix.length() + 3 + 1;
+  _server->on(String(_prefix).c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
+     size_t len = strlen(page) + _prefix.length() + 3 + 1 + 1;;
      char * buff = (char *)malloc(len);
-     size_t n = snprintf(buff,len,page,String(_prefix+"/ws").c_str());
-     request->send(200, "text/html", String(buff, n));
+     len = snprintf(buff,len-1,page,String(_prefix+"/ws").c_str());
+     buff[len] = '\0';
+     request->send(200, "text/html", String(buff));
   });
 
   if (_intSrv) {

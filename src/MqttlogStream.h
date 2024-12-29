@@ -29,7 +29,11 @@
 #include <list>
 
 #ifndef MAX_MQTT_QUEUE
-#define MAX_MQTT_QUEUE (30)
+#define MAX_MQTT_QUEUE (5)
+#endif
+
+#ifndef MAX_MQTT_SENT
+#define MAX_MQTT_SENT (3)
 #endif
 
 class MqttStream : public LOGBase {
@@ -70,8 +74,7 @@ class MqttStream : public LOGBase {
     PubSubClient * _mqtt = NULL;
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
-    std::list<String> queue;
-   
+    std::list<String> unsent;
   protected:
 };
 #endif

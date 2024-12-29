@@ -52,7 +52,7 @@ class WebSerialStream : public LOGBase {
     virtual size_t write(uint8_t c);
   private:
     bool _intSrv = false;
-    uint16_t _webPort;
+    uint16_t _webPort = 80;
     AsyncWebServer * _server;
     AsyncWebSocketWithData * _ws;
     String _prefix = ""; // i.e. the /

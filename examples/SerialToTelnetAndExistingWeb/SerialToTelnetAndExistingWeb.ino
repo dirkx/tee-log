@@ -46,7 +46,10 @@ WebSerialStream webSerialStream = WebSerialStream(&webServer, "/logDemo" );
 
 void setup() {
   Serial.begin(115200);
-  Log.println("Started (this will only show up on serial - nothing setup and no network)");
+  Log.setTimestamp(true);
+  Log.setIdentifier("Log");
+
+  Log.println("Started");
 
   Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
   Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
@@ -60,6 +63,7 @@ void setup() {
 
   // Set up mDNS to make our serial-2-telnet and http service visible and easy to find.
   MDNS.begin("my-webby-name");
+  MDNS.addService("http", "tcp", 80);
 
   // Set a normal webpage
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {

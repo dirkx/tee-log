@@ -107,12 +107,12 @@ public:
     };
     size_t write(byte a) {
         if (_timestamp && lst == '\n') {
-            
             time_t now = time(NULL);
-            char buff[30], buff2[50];
+            char buff[30], buff2[32];
             ctime_r(&now,buff);
 	    buff[19] = '\0';
-            snprintf(buff2,sizeof(buff2), "%s.%03lu - %s - ",buff+11,millis() % 1000, _identifier);
+            size_t n = snprintf(buff2,sizeof(buff2)-1, "%s.%03lu - %s - ",buff+11,millis() % 1000, _identifier ? _identifier : "");
+	    buff2[n] = '\0';
             for(char * p = buff2; *p; p++)
                 _dwrite(*p);
         };
@@ -131,26 +131,41 @@ private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
     bool _timestamp = false;
-    byte lst = 0;
+    byte lst = '\n';
     
-    const int MAX_QUEUE_LEN = 30;
+    static const int MAX_QUEUE_LEN = 30;
+    static const int MAX_LINE = 300;
     std::list<String> queue;
-    String qbuff;
+    char buff[ MAX_LINE + 5]; 
+    int at = 0;
 
     size_t _dwrite(byte a) {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) 
             (*it)->write(a);
-
-        qbuff  += String(a);        
-        if (a == '\n') {
+        buff[at++] = a;
+        if (a == '\n' || at >= MAX_LINE) {
         	while(queue.size() >= MAX_QUEUE_LEN)
             		queue.erase(queue.begin());
-	        queue.push_back(qbuff);
-        	for (auto it = handlers.begin(); it != handlers.end(); ++it) 
-            		(*it)->emitLastLine(qbuff);
-		qbuff = String();
-	};
 
+		if (a != '\n') {
+			buff[at++] = '.';
+			buff[at++] = '.';
+			buff[at++] = '.';
+                };
+
+		buff[at] = '\0';
+                String line = String(buff);
+	        queue.push_back(line);
+
+		at = 0;
+		if (a != '\n') {
+			buff[at++] = '.';
+			buff[at++] = '.';
+			buff[at++] = '.';
+		};
+        	for (auto it = handlers.begin(); it != handlers.end(); ++it) 
+            		(*it)->emitLastLine(line);
+	};
         if (_disableSerial)
             return 1;
 
