@@ -118,7 +118,9 @@ void TelnetSerialStream::loop() {
         Log.print(":");
         Log.print(_serverClients[i]->remotePort());
         Log.println(" connected by telnet");
-
+        // Catch up with any history we may have.
+        //
+        Log.print(history());
         break;
       };
     };

@@ -33,7 +33,7 @@ void MqttStream::begin() {
         
         PubSubClient * psc = new PubSubClient(*_client);
         psc->setServer(_mqttServer, _mqttPort);
-        psc->setBufferSize(sizeof(logbuff)+9+strlen(_mqttTopic));
+//        psc->setBufferSize(sizeof(logbuff)+9+strlen(_mqttTopic));
         
         Log.printf("Opened log on mqtt:://%s:%d/%s\n", _mqttServer, _mqttPort, _mqttTopic);
         _mqtt = psc;
@@ -84,7 +84,16 @@ void MqttStream::loop() {
     lst = millis();
 }
 
+void MqttStream::emitLastLine(String s) {
+    // Silently purge entries.
+    while(queue.size() >= MAX_MQTT_QUEUE)
+            queue.erase(queue.begin());
+
+    queue.push_back(s);
+}
+
 size_t MqttStream::write(uint8_t c) {
+#if 0
     if (at >= sizeof(logbuff)) {
         Serial.println("Purged logbuffer (should never happen)");
         at = 0;
@@ -101,6 +110,7 @@ size_t MqttStream::write(uint8_t c) {
             queue.erase(queue.begin());
         queue.push_back(String(logbuff));
     };
+#endif
     return 1;
 }
 #endif

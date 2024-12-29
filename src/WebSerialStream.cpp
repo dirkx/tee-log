@@ -19,12 +19,25 @@
 
 #include "TLog.h"
 #include "WebSerialStream.h"
+#include "WebSerialStreamPage.h"
 
 #if (defined(ESP32) || defined(ESP8266))
 
+class AsyncWebSocketWithData : public AsyncWebSocket {
+	public:	
+		AsyncWebSocketWithData(String str) : AsyncWebSocket(str) {};
+		void setData(void *d) { _d = d; };
+	   	void *data() { return _d; };
+        private:
+		void * _d = NULL;
+};
+
+
+void WebSerialStream::emitLastLine(String line) {
+	_ws->textAll(line);
+};
+
 size_t WebSerialStream::write(uint8_t c) {
-  _buff[_at % sizeof(_buff)] = c;
-  _at++;
   return 1;
 }
 
@@ -32,90 +45,69 @@ WebSerialStream::~WebSerialStream() {
   stop();
 }
 
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  LOGBase* me = (LOGBase*)(((AsyncWebSocketWithData*)server)->data());
+
+  switch (type) {
+    case WS_EVT_CONNECT:
+      break;
+    case WS_EVT_DISCONNECT:
+      break;
+    case WS_EVT_DATA: {
+	  AwsFrameInfo *info = (AwsFrameInfo*)arg;
+	  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+		data[len] = 0;
+		if (strcmp((char*)data, "getHistory") == 0) {
+			client->text(me->history());
+		}
+	  }
+      }
+      break;
+    case WS_EVT_PONG:
+    case WS_EVT_ERROR:
+      break;
+  }
+}
+
 void WebSerialStream::begin() {
-  if (_server != NULL)
-    return;
-  _server = new WebServer(_webPort);
-  _server->on("/",[this]() {
-  _server->send(200, "text/html", "<html><head><title>log</title></head>"
-	"<style>"
-		"#log { font-family: 'Courier New', monospace; white-space: pre; }"
-	"</style>"
-	"<script language=javascript>"
-        "var at = 0;"
-	"function st() { setTimeout(750, f()); };"
-	"function f() { fetch('log?at='+at)."
-                "then("
-		   "r => { return r.json(); }"
-                ").then( "
-                   "j => { " 
-			    /* we do rouhgly 'at the end' as Macs and Edge are a few pixels off. */
-			  " isAtEnd = (window.innerHeight + window.pageYOffset) >= document.body.offsetHeight - 4; " 
-                          " document.getElementById('log').innerHTML += j.buff; "
-                          " at= j.at; "
-                          " if (isAtEnd) window.scrollTo(0,document.body.scrollHeight); "
- 			  " st(); "
-                   "}"
-		").catch( e => { console.log(e); st(); } "
-                ");"
-        "};"
-        "window.onLoad = f();"
-	"</script>"
-	"<body><div id=log></div></body></html>");
-  });
-  _server->on("/log",[this]() {
-    if (!_server->hasArg("at")) {
-       _server->send(400, "text/plain", "Missing at argument.");
-       return;
-    };
-    unsigned long prevAt= _server->arg("at").toInt();
-    String out = "{\"at\":" + String(_at) + ",\"buff\":\"";
+  if (_server == NULL) {
+  	_server = new AsyncWebServer(_webPort);
+	_intSrv = true;
+   };
 
-    // reset browsers from the future (e.g. after a reset)
-    if (prevAt > _at) {
-        out += "<font color=red><hr><i>.. log reset..</i></font><hr>";
-    	prevAt = _at;
-    };
-    if (_at > sizeof(_buff) && prevAt < _at - sizeof(_buff)) {
-        out += "<font color=red><hr><i>.. skipping " + 
-		String(_at - sizeof(_buff) - prevAt) +
-		" bytes of log - no longer in buffer ..</i><hr></font>";
-	prevAt = _at - sizeof(_buff);
-    };
-    for(;prevAt != _at; prevAt++) {
-       char c = _buff[prevAt % sizeof(_buff)];
-       switch(c) {
-       case '<': out += "&lt;"; break;
-       case '>': out += "&gt;"; break;
-       case '\b': out += "\\b"; break;
-       case '\n': out += "\\n"; break;
-       case '\r': out += "\\r"; break;
-       case '\f': out += "\\f"; break;
-       case '\t': out += "\\t"; break;
-       case '"' : out += "\\\""; break;
-       case '\\': out += "\\\\"; break;
-       default  : out += c; break;
-       };
-    };
-    out += "\"}";
-    _server->send(200, "application/json", out);
-  });
-  _server->begin();
+   if (_ws == NULL) 
+	_ws = new AsyncWebSocketWithData(_prefix + "/ws");
 
-  Log.printf("Opened serial web server on http://%s:%d\n", WiFi.localIP().toString().c_str(), _webPort);
-  MDNS.addService("http", "tcp", _webPort);
+  _ws->setData(this);
+  _ws->onEvent(onEvent);
+  _server->addHandler(_ws);
+
+  _server->on(String(_prefix+"/").c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
+     size_t len = strlen(page) + _prefix.length() + 3 + 1;
+     char * buff = (char *)malloc(len);
+     size_t n = snprintf(buff,len,page,String(_prefix+"/ws").c_str());
+     request->send(200, "text/html", String(buff, n));
+  });
+
+  if (_intSrv) {
+    _server->begin();
+    Log.printf("Opened serial web server on http://%s:%d%s\n", WiFi.localIP().toString().c_str(), _webPort, _prefix.c_str());
+    MDNS.addService("http", "tcp", _webPort);
+  } else 
+    Log.printf("Added serial web server on %s\n", _prefix.c_str());
 };
 
 void WebSerialStream::stop() {
   if (!_server)
     return;
-  _server->stop();
+  if (!_intSrv)
+    return;
+  _server->end();
   delete _server;
   _server = NULL;
 }
 
 void WebSerialStream::loop() {
-  if (_server)
- 	_server->handleClient();
+  _ws->cleanupClients();
 }
 #endif

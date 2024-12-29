@@ -63,15 +63,14 @@ class MqttStream : public LOGBase {
     virtual void begin();
     virtual void loop();
     virtual void reconnect();
+    virtual void emitLastLine(String s);
 
   private:
     Client * _client = NULL;
     PubSubClient * _mqtt = NULL;
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
-    char logbuff[300];
     std::list<String> queue;
-    size_t at = 0;
    
   protected:
 };

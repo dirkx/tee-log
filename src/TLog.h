@@ -27,6 +27,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <list>
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -45,6 +46,8 @@
 #define IDENTIFIER_GENERATOR "TLG"
 #endif
 
+class TLog;
+
 class LOGBase : public Print {
 public:
     LOGBase(const char * identifier = IDENTIFIER_GENERATOR) : _identifier(strdup(identifier)) {};
@@ -55,9 +58,18 @@ public:
     virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
+    String history();
+    virtual void emitLastLine(String line) { return; };
     
 protected:
-    char * _identifier;
+    const char * _identifier;
+    TLog * _tlog = NULL;
+
+friend TLog;
+    // Small hack to allow for a single shared
+    // line buffer across all writers.
+    //
+    void setTLog(TLog *p);
 };
 
 class TLog : public LOGBase
@@ -70,10 +82,12 @@ public:
     //void addPrintStream2(const LOGBase * _handler) { addPrintStream(std::make_shared<LOGBase>(_handler)); }
     void addPrintStream(const std::shared_ptr<LOGBase> &_handler) {
         auto it = find(handlers.begin(), handlers.end(), _handler);
-        if ( handlers.end() == it)
+        if ( handlers.end() == it) {
             // we're not using push_back; that copies; but use a reference.
             // As it can see reuse.
             handlers.emplace_back(_handler);
+            _handler->setTLog(this);
+        };
     };
     virtual void begin() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {
@@ -104,19 +118,42 @@ public:
         };
         lst = a;
         return _dwrite(a);
-    }
+    };
+
+    String history() {
+	String out;
+	for(const auto &i: queue) 
+		out += i;
+	return out;
+    };
+
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
     bool _timestamp = false;
     byte lst = 0;
     
+    const int MAX_QUEUE_LEN = 30;
+    std::list<String> queue;
+    String qbuff;
+
     size_t _dwrite(byte a) {
-        for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+        for (auto it = handlers.begin(); it != handlers.end(); ++it) 
             (*it)->write(a);
-        }
+
+        qbuff  += String(a);        
+        if (a == '\n') {
+        	while(queue.size() >= MAX_QUEUE_LEN)
+            		queue.erase(queue.begin());
+	        queue.push_back(qbuff);
+        	for (auto it = handlers.begin(); it != handlers.end(); ++it) 
+            		(*it)->emitLastLine(qbuff);
+		qbuff = String();
+	};
+
         if (_disableSerial)
             return 1;
+
         return Serial.write(a);
     }
 };
