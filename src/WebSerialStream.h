@@ -56,6 +56,7 @@ class WebSerialStream : public LOGBase {
     AsyncWebServer * _server;
     AsyncWebSocketWithData * _ws;
     String _prefix = ""; // i.e. the /
+  protected:
 };
 #endif
 #endif

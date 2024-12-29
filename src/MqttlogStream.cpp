@@ -67,6 +67,7 @@ void MqttStream::loop() {
         auto it = queue.begin();
         while (it != queue.end()) {
             _mqtt->publish(_mqttTopic ? _mqttTopic : "debug", it->c_str());
+	    _mqtt->loop();
             queue.erase(it++);
         };
         return;

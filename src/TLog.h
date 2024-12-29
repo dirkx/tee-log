@@ -62,7 +62,7 @@ public:
     virtual void emitLastLine(String line) { return; };
     
 protected:
-    const char * _identifier;
+    char * _identifier;
     TLog * _tlog = NULL;
 
 friend TLog;
