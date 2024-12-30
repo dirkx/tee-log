@@ -31,6 +31,7 @@ class AsyncWebSocketWithData : public AsyncWebSocket {
         private:
 		void * _d = NULL;
 };
+// WebSerialStream * me = NULL;
 
 void WebSerialStream::emitLastLine(String line) {
 	if (_ws && _ws->count())
@@ -45,6 +46,7 @@ WebSerialStream::~WebSerialStream() {
   stop();
 }
 
+
 void WebSerialStream::begin() {
   if (_server == NULL) {
   	_server = new AsyncWebServer(_webPort);
@@ -54,8 +56,7 @@ void WebSerialStream::begin() {
    if (_ws == NULL) 
 	_ws = new AsyncWebSocketWithData(_prefix + "/ws");
 
-  _ws->setData(this);
-
+  _ws->setData(this);// me = this;
   _ws->onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
   	if (type != WS_EVT_DATA) 
 		return;

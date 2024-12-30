@@ -149,7 +149,7 @@ public:
 	return & queue;
     };
 
-    static const int MAX_LOG_LINE = 250;
+    static const int MAX_LOG_LINE = 200;
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
@@ -157,6 +157,7 @@ private:
     byte lst = '\n';
     
     static const int MAX_QUEUE_LEN = 25;
+    static const int MAX_LOOP_QUEUE_LEN = 7;
 
     std::list<String> queue, loopqueue;
 
@@ -175,18 +176,17 @@ private:
 		// Add ellipsis on overflow
 		if (a != '\n') {
 			at = MAX_LOG_LINE; 
-			if (a != '\n') {
-				_buff[at++] = '.';
-				_buff[at++] = '.';
-				_buff[at++] = '.';
-			};
+			_buff[at++] = '.';
+			_buff[at++] = '.';
+			_buff[at++] = '.';
                 };
 		_buff[at++] = '\0';
 		at = 0;
 
-        	while(loopqueue.size() >= MAX_QUEUE_LEN)
-            		loopqueue.erase(loopqueue.begin());
-	        loopqueue.push_back(String(_buff));
+//        	while(loopqueue.size() >= MAX_LOOP_QUEUE_LEN) loopqueue.erase(loopqueue.begin());
+// Assum earlier log lines are more important :)
+		if (loopqueue.size() < MAX_LOOP_QUEUE_LEN)
+		        loopqueue.push_back(String(_buff));
 	};
 
         if (_disableSerial)
