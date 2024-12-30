@@ -48,6 +48,7 @@ class MqttStream : public LOGBase {
       if (mqttTopic) _mqttTopic = strdup(mqttTopic);
       _client = NULL; // used to detect the case where we're not resposible for the connection.
     };
+    ~MqttStream() { if (buff) free(buff); buff = NULL; stop(); };
 
     void setPort(uint16_t port) {
       _mqttPort = port;
@@ -65,6 +66,7 @@ class MqttStream : public LOGBase {
 
     virtual size_t write(uint8_t c);
     virtual void begin();
+    virtual void stop();
     virtual void loop();
     virtual void reconnect();
     virtual void emitLastLine(String s);
@@ -75,6 +77,8 @@ class MqttStream : public LOGBase {
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
     std::list<String> unsent;
+    char * buff = NULL;
+    bool _intSrv = false;
   protected:
 };
 #endif

@@ -103,24 +103,30 @@ void TelnetSerialStream::loop() {
 
         _serverClients[i] = new WiFiClient(_server->available());
 
-        _serverClients[i]->print("Telnet connection ");
+        _serverClients[i]->print("Telnet connection");
         if (_identifier && _identifier[0]) {
 	        _serverClients[i]->print(" to ");
 	        _serverClients[i]->print(_identifier);
 	};
-        if(_hostname) {
-	        _serverClients[i]->print(" @ ");
+        if(_hostname && _hostname[0]) {
+	        _serverClients[i]->print("@");
 		_serverClients[i]->print(_hostname);
 	};
         _serverClients[i]->println();
+
+        // Catch up with any history we may have.
+        //
+       {	
+		std::lock_guard<std::mutex> lck(_tlog->_historyMutex);
+        	for(auto const line : *history()) 
+			_serverClients[i]->println(line);
+	};
 
         Log.print(_serverClients[i]->remoteIP());
         Log.print(":");
         Log.print(_serverClients[i]->remotePort());
         Log.println(" connected by telnet");
-        // Catch up with any history we may have.
-        //
-        Log.print(history());
+
         break;
       };
     };

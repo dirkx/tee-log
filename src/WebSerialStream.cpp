@@ -32,10 +32,9 @@ class AsyncWebSocketWithData : public AsyncWebSocket {
 		void * _d = NULL;
 };
 
-
 void WebSerialStream::emitLastLine(String line) {
 	if (_ws && _ws->count())
-		_ws->textAll(line);
+		_ws->textAll(line + "\n");
 };
 
 size_t WebSerialStream::write(uint8_t c) {
@@ -44,30 +43,6 @@ size_t WebSerialStream::write(uint8_t c) {
 
 WebSerialStream::~WebSerialStream() {
   stop();
-}
-
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  WebSerialStream * me = (WebSerialStream*)(((AsyncWebSocketWithData*)server)->data());
-
-  switch (type) {
-    case WS_EVT_CONNECT:
-      break;
-    case WS_EVT_DISCONNECT:
-      break;
-    case WS_EVT_DATA: {
-	  AwsFrameInfo *info = (AwsFrameInfo*)arg;
-	  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-		data[len] = 0;
-		if (strcmp((char*)data, "getHistory") == 0) {
-			client->text(me->history());
-		}
-	  }
-      }
-      break;
-    case WS_EVT_PONG:
-    case WS_EVT_ERROR:
-      break;
-  }
 }
 
 void WebSerialStream::begin() {
@@ -80,36 +55,24 @@ void WebSerialStream::begin() {
 	_ws = new AsyncWebSocketWithData(_prefix + "/ws");
 
   _ws->setData(this);
-#if 1
-  _ws->onEvent(onEvent);
-#else
+
   _ws->onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  WebSerialStream * me = (WebSerialStream*)(((AsyncWebSocketWithData*)server)->data());
+  	if (type != WS_EVT_DATA) 
+		return;
 
-  switch (type) {
-    case WS_EVT_CONNECT:
-      me->_connected++;
-      break;
-    case WS_EVT_DISCONNECT:
-      me->_connected--;
-      break;
-    case WS_EVT_DATA: {
-          AwsFrameInfo *info = (AwsFrameInfo*)arg;
-          if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+	WebSerialStream * me = (WebSerialStream*)(((AsyncWebSocketWithData*)server)->data());
+        AwsFrameInfo *info = (AwsFrameInfo*)arg;
+
+        if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
                 data[len] = 0;
-                if (strcmp((char*)data, "getHistory") == 0) {
-                        client->text(me->history());
-                }
+		if (strcmp((char*)data, "getHistory") == 0) {
+		      std::lock_guard<std::mutex> lck(me->_tlog->_historyMutex);
+                      for(auto const line : *(me->history())) {
+                                client->text(line + "\n");
+			}
+		}
           }
-      }
-      break;
-    case WS_EVT_PONG:
-    case WS_EVT_ERROR:
-      break;
-  }
-});
-#endif
-
+  });
   _server->addHandler(_ws);
 
   _server->on(String(_prefix).c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
@@ -118,6 +81,7 @@ void WebSerialStream::begin() {
      len = snprintf(buff,len-1,page,String(_prefix+"/ws").c_str());
      buff[len] = '\0';
      request->send(200, "text/html", String(buff));
+     Log.printf("Weblog: %s %s %s\n", request->client()->localIP().toString().c_str(), "GET", request->url().c_str());
   });
 
   if (_intSrv) {
