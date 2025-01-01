@@ -118,7 +118,7 @@ void TelnetSerialStream::loop() {
         //
        {	
 		std::lock_guard<std::mutex> lck(_tlog->_historyMutex);
-        	for(auto const line : *history()) 
+        	for(auto const line : *(_tlog->history()))
 			_serverClients[i]->println(line);
 	};
 

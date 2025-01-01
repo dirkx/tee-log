@@ -16,7 +16,11 @@ static const char page[] PROGMEM = R"(
      function onClose(event) { setTimeout(initWebSocket, 2000); }
      function onMessage(event) {
 	 var isAtEnd = (window.innerHeight + window.pageYOffset) >= document.body.offsetHeight - 4; 
-         document.getElementById('log').innerHTML += enc(event.data);
+         tag = document.getElementById('log')
+         while (tag.innerHTML.length > 1014*1024*5) {
+ 		tag.innerHTML.slice(0, tag.innerHTML.indexOf("\n"));
+	 };
+ 	 tag.innerHTML += htmlenc(event.data);
          if (isAtEnd) 
 		window.scrollTo(0,document.body.scrollHeight); 
      }
@@ -26,7 +30,7 @@ static const char page[] PROGMEM = R"(
          websocket.onclose = onClose;
          websocket.onmessage = onMessage;
      }
-     function enc(str) {
+     function htmlenc(str) {
          const map = { '<': '&lt;', '>': '&gt;', '&': '&amp;' };
          return str.replace(/<>&/,function(match) { return map[match]; });
      }

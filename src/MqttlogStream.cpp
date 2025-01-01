@@ -42,7 +42,7 @@ void MqttStream::begin() {
         if (psc->getBufferSize() < max)
 	        psc->setBufferSize(max);
         
-        Log.printf("Opened log on mqtt:://%s:%d#%s\n", _mqttServer, _mqttPort, _mqttTopic);
+        Log.printf("Opened log mqtt server on mqtt:://%s:%d#%s\n", _mqttServer, _mqttPort, _mqttTopic);
         _mqtt = psc;
         _mqtt->connect(_identifier);
         _intSrv = true;
@@ -104,12 +104,8 @@ void MqttStream::loop() {
 	    if (buff[0]) 
        	      _mqtt->publish(_mqttTopic, buff); // it->c_str());
 #else
-	    String line = String(*it);
+	    _mqtt->publish(_mqttTopic, it->c_str());
             it = unsent.erase(it);
-
-//	    Serial.printf("MQTT: %p #%s -> \"%s\"\n", _mqttTopic, _mqttTopic, line.c_str());
-
-      	    _mqtt->publish(_mqttTopic, line.c_str());
 #endif
         };
         return;
@@ -117,11 +113,6 @@ void MqttStream::loop() {
     if (!_intSrv)
         return; // not our responsibility
 
-    // When we do not have the client handle - we're sharing a connection
-    // with something else. So no need to try to (re)connect, etc.
-    if (!_client)
-        return;
-    
     if (lst && millis() - lst < 15000)
         return;
     

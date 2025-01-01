@@ -20,7 +20,6 @@
 #include "TLog.h"
 
 void LOGBase::setTLog(TLog *p) { _tlog = p; };
-std::list<String> * LOGBase::history() { return _tlog->history(); };
 
 TLog Log("LOG");
 TLog Debug("DBG");

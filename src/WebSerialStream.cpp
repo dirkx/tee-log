@@ -68,7 +68,7 @@ void WebSerialStream::begin() {
                 data[len] = 0;
 		if (strcmp((char*)data, "getHistory") == 0) {
 		      std::lock_guard<std::mutex> lck(me->_tlog->_historyMutex);
-                      for(auto const line : *(me->history())) {
+                      for(auto const line : *(me->_tlog->history())) {
                                 client->text(line + "\n");
 			}
 		}

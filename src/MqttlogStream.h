@@ -38,15 +38,13 @@
 
 class MqttStream : public LOGBase {
   public:
-    MqttStream(Client * client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
-      _client(client), _mqttPort(mqttPort) {
+    MqttStream(Client & client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
+      _client(&client), _mqttPort(mqttPort) {
       if (mqttServer) _mqttServer = strdup(mqttServer);
       if (mqttTopic) _mqttTopic = strdup(mqttTopic);
     };
-    MqttStream(PubSubClient * pubsub, char * mqttTopic = NULL) :
-      _mqtt(pubsub) {
+    MqttStream(PubSubClient & pubsub, char * mqttTopic = NULL) : _client(), _mqtt(&pubsub) {
       if (mqttTopic) _mqttTopic = strdup(mqttTopic);
-      _client = NULL; // used to detect the case where we're not resposible for the connection.
     };
     ~MqttStream() { if (buff) free(buff); buff = NULL; stop(); };
 
@@ -72,7 +70,7 @@ class MqttStream : public LOGBase {
     virtual void emitLastLine(String s);
 
   private:
-    Client * _client = NULL;
+    Client  *_client = NULL;
     PubSubClient * _mqtt = NULL;
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;

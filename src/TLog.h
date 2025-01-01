@@ -59,7 +59,6 @@ public:
     virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
-    std::list<String> * history();
     virtual void emitLastLine(String line) { return; };
     
 protected:
@@ -149,7 +148,7 @@ public:
 	return & queue;
     };
 
-    static const int MAX_LOG_LINE = 200;
+    static const int MAX_LOG_LINE = 1200;
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
