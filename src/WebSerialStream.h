@@ -39,9 +39,9 @@ class AsyncWebSocketWithData;
 class WebSerialStream : public LOGBase {
   public:
     WebSerialStream(const uint16_t webPort = 80) : 
-		_webPort(webPort) {};
+		_webPort(webPort) { Serial.printf("WSS create %p\n", this); };
     WebSerialStream(AsyncWebServer * webServer, String urlPrefix ) 
-		: _server(webServer), _prefix(urlPrefix) {};
+		: _server(webServer), _prefix(urlPrefix) {  Serial.printf("WSS create %p\n", this); };
     ~WebSerialStream();
 
     virtual void begin();
@@ -53,8 +53,8 @@ class WebSerialStream : public LOGBase {
   private:
     bool _intSrv = false;
     uint16_t _webPort = 80;
-    AsyncWebServer * _server;
-    AsyncWebSocketWithData * _ws;
+    AsyncWebServer * _server = NULL;
+    AsyncWebSocketWithData * _ws = NULL;
     String _prefix = ""; // i.e. the /
   protected:
 };

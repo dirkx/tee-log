@@ -105,6 +105,7 @@ public:
 
         	for (auto it = handlers.begin(); it != handlers.end(); ++it) 
             		(*it)->emitLastLine(line);
+
 		{
                  	std::lock_guard<std::mutex> lck(_historyMutex);
 	        	while(queue.size() >= MAX_QUEUE_LEN)
@@ -155,7 +156,7 @@ private:
     bool _timestamp = false;
     byte lst = '\n';
     
-    static const int MAX_QUEUE_LEN = 25;
+    static const int MAX_QUEUE_LEN = 30;
     static const int MAX_LOOP_QUEUE_LEN = 7;
 
     std::list<String> queue, loopqueue;

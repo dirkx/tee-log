@@ -37,7 +37,7 @@ class TelnetSerialStream : public LOGBase {
     virtual void begin();
     virtual void loop();
     virtual void stop();
-
+    void setHostname(String hostname) { _hostname = hostname; Serial.printf("Set TSS %p %s\n", this, _hostname.c_str()); };
   private:
     String _hostname = "";
     uint16_t _telnetPort, _maxClients;
