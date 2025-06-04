@@ -28,7 +28,7 @@ void MqttStream::stop() {
 };
 
 void MqttStream::begin() {
-    size_t max = 5 + 2 + strlen(_mqttTopic) + TLog::MAX_LOG_LINE;
+    size_t max = 5 + 2 + strlen(_mqttTopic) + maxLine();
     if (!_mqtt) {
         if (!_mqttServer || !_mqttTopic || !_mqttPort) {
             Log.printf("Missing%s%s%s for MQTT Logging\n",
@@ -53,7 +53,7 @@ void MqttStream::begin() {
         };
         if (_mqtt->getBufferSize() < max)
 	    Log.printf("Warniung - MQTT buffer too small for topic/payload with maximum lenght (%d+%d). Increase to at least %d bytes.\n",
-		strlen(_mqttTopic), TLog::MAX_LOG_LINE, max);
+		strlen(_mqttTopic), maxLine(), max);
         Log.printf("Opened mqtt log on topic #%s\n", _mqttTopic);
     };
     reconnect();
@@ -81,7 +81,7 @@ void MqttStream::loop() {
     if (_mqtt->connected()) {
         auto it = unsent.begin();
 	int i = 0;
-        while (it != unsent.end() && i++ < MAX_MQTT_SENT) {
+        while (it != unsent.end() && i++ < maxLine()) {
 #if 0
    	    // We dup this - so it lives as long as mqtt needs to send this off.
 	    //

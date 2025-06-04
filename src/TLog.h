@@ -75,8 +75,12 @@ friend TLog;
 class TLog : public LOGBase
 {
 public:
+    TLog(): TLog(IDENTIFIER_GENERATOR) {};
+    TLog(const char * identifier) : LOGBase(identifier) {
+	_buff = malloc(MAX_LOG_LINE);
+    };
+    ~TLog() { free(_buff); };
 
-    TLog(const char * identifier) : LOGBase(identifier) {};
     void disableSerial(bool onoff) { _disableSerial = onoff; };
     void setTimestamp(bool onoff) { _timestamp = onoff; };
     
@@ -149,19 +153,29 @@ public:
 	return & queue;
     };
 
-    static const int MAX_LOG_LINE = 1200;
+    void setMaxLine(size_t max) {
+	char * old = _buff;
+	MAX_LOG_LINE = max;
+	_buff = malloc(MAX_LOG_LINE);
+	if (at) memcpy(_buff,old,at);
+	free(old);
+    };
+    size_t maxLine() {
+	return MAX_LOG_LINE;
+    };
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
     bool _timestamp = false;
     byte lst = '\n';
+    size_t MAX_LOG_LINE = 1200;
     
     static const int MAX_QUEUE_LEN = 30;
     static const int MAX_LOOP_QUEUE_LEN = 7;
 
     std::list<String> queue, loopqueue;
 
-    char _buff[ MAX_LOG_LINE + 5]; 
+    char * _buff;
     int at = 0;
 
     size_t _dwrite(byte a) {
