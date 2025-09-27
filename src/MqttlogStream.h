@@ -29,21 +29,24 @@
 #include <list>
 
 #ifndef MAX_MQTT_QUEUE
-#define MAX_MQTT_QUEUE (30)
+#define MAX_MQTT_QUEUE (5)
+#endif
+
+#ifndef MAX_MQTT_SENT
+#define MAX_MQTT_SENT (3)
 #endif
 
 class MqttStream : public LOGBase {
   public:
-    MqttStream(Client * client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
-      _client(client), _mqttPort(mqttPort) {
+    MqttStream(Client & client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
+      _client(&client), _mqttPort(mqttPort) {
       if (mqttServer) _mqttServer = strdup(mqttServer);
       if (mqttTopic) _mqttTopic = strdup(mqttTopic);
     };
-    MqttStream(PubSubClient * pubsub, char * mqttTopic = NULL) :
-      _mqtt(pubsub) {
+    MqttStream(PubSubClient & pubsub, char * mqttTopic = NULL) : _client(), _mqtt(&pubsub) {
       if (mqttTopic) _mqttTopic = strdup(mqttTopic);
-      _client = NULL; // used to detect the case where we're not resposible for the connection.
     };
+    ~MqttStream() { if (buff) free(buff); buff = NULL; stop(); };
 
     void setPort(uint16_t port) {
       _mqttPort = port;
@@ -61,18 +64,19 @@ class MqttStream : public LOGBase {
 
     virtual size_t write(uint8_t c);
     virtual void begin();
+    virtual void stop();
     virtual void loop();
     virtual void reconnect();
+    virtual void emitLastLine(String s);
 
   private:
-    Client * _client = NULL;
+    Client  *_client = NULL;
     PubSubClient * _mqtt = NULL;
     const char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
-    char logbuff[300];
-    std::list<String> queue;
-    size_t at = 0;
-   
+    std::list<String> unsent;
+    char * buff = NULL;
+    bool _intSrv = false;
   protected:
 };
 #endif

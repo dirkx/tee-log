@@ -27,8 +27,10 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <list>
 
 #ifdef ESP32
+#include <mutex>
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #define IDENTIFIER_GENERATOR (WiFi.macAddress().c_str())
@@ -45,6 +47,8 @@
 #define IDENTIFIER_GENERATOR "TLG"
 #endif
 
+class TLog;
+
 class LOGBase : public Print {
 public:
     LOGBase(const char * identifier = IDENTIFIER_GENERATOR) : _identifier(strdup(identifier)) {};
@@ -55,36 +59,70 @@ public:
     virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
-    
+    virtual void emitLastLine(String line) { return; };
+
+    void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
+    size_t maxLine() { return MAX_LOG_LINE; };
 protected:
     char * _identifier;
+    TLog * _tlog = NULL;
+    size_t MAX_LOG_LINE = 1200;
+
+friend TLog;
+    // Small hack to allow for a single shared
+    // line buffer across all writers.
+    //
+    void setTLog(TLog *p);
+
 };
 
 class TLog : public LOGBase
 {
 public:
-    TLog(const char * identifier) : LOGBase(identifier) {};
+    TLog(): TLog(IDENTIFIER_GENERATOR) {};
+    TLog(const char * identifier) : LOGBase(identifier) {
+	_buff = (char*) malloc(MAX_LOG_LINE);
+    };
+    ~TLog() { free(_buff); };
+
     void disableSerial(bool onoff) { _disableSerial = onoff; };
     void setTimestamp(bool onoff) { _timestamp = onoff; };
     
     //void addPrintStream2(const LOGBase * _handler) { addPrintStream(std::make_shared<LOGBase>(_handler)); }
     void addPrintStream(const std::shared_ptr<LOGBase> &_handler) {
         auto it = find(handlers.begin(), handlers.end(), _handler);
-        if ( handlers.end() == it)
+        if ( handlers.end() == it) {
             // we're not using push_back; that copies; but use a reference.
             // As it can see reuse.
             handlers.emplace_back(_handler);
+            _handler->setTLog(this);
+        };
     };
     virtual void begin() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {
             (*it)->begin();
         }
-        // MDNS.begin();
     };
     virtual void loop() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {
             (*it)->loop();
         }
+        while(loopqueue.size()) {
+		String line = loopqueue.front();
+            	loopqueue.erase(loopqueue.begin());
+
+        	for (auto it = handlers.begin(); it != handlers.end(); ++it) 
+            		(*it)->emitLastLine(line);
+
+		{
+#ifdef ESP32
+                 	std::lock_guard<std::mutex> lck(_historyMutex);
+#endif
+	        	while(queue.size() >= MAX_QUEUE_LEN)
+            			queue.erase(queue.begin());
+			queue.push_back(line);
+		}
+	};
     };
     virtual void stop() {
         for (auto it = handlers.begin(); it != handlers.end(); ++it) {
@@ -92,33 +130,91 @@ public:
         }
     };
     size_t write(byte a) {
-        if (_timestamp && lst == '\n') {
-            
+        if (lst == '\n') {
+	  if (_timestamp) {
             time_t now = time(NULL);
-            char buff[30], buff2[50];
-            ctime_r(&now,buff);
-	    buff[19] = '\0';
-            snprintf(buff2,sizeof(buff2), "%s.%03lu - %s - ",buff+11,millis() % 1000, _identifier);
+            char buff1[30], buff2[32];
+            ctime_r(&now,buff1);
+	    buff1[19] = '\0';
+            size_t n = snprintf(buff2,sizeof(buff2)-1, "%s.%03lu:",buff1+11,millis() % 1000);
+	    buff2[n] = '\0';
             for(char * p = buff2; *p; p++)
                 _dwrite(*p);
+          };
+          if (_identifier) {
+            char buff2[32];
+            size_t n = snprintf(buff2,sizeof(buff2)-1, "%s:", _identifier);
+            for(char * p = buff2; *p; p++)
+                _dwrite(*p);
+	  };
+          _dwrite(' ');
         };
         lst = a;
         return _dwrite(a);
-    }
+    };
+
+    // std::mutex historyMutex() { return _historyMutex; };
+#ifdef ESP32
+    std::mutex _historyMutex;
+#endif
+    std::list<String> * history() {
+	return & queue;
+    };
+
+    void setMaxLine(size_t max) {
+	char * old = _buff;
+	MAX_LOG_LINE = max;
+	_buff = (char *)malloc(MAX_LOG_LINE);
+	if (at) memcpy(_buff,old,at);
+	free(old);
+    };
+    size_t maxLine() {
+	return MAX_LOG_LINE;
+    };
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
     bool _timestamp = false;
-    byte lst = 0;
+    byte lst = '\n';
     
+    static const int MAX_QUEUE_LEN = 30;
+    static const int MAX_LOOP_QUEUE_LEN = 7;
+
+    std::list<String> queue, loopqueue;
+
+    char * _buff;
+    int at = 0;
+
     size_t _dwrite(byte a) {
-        for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+        for (auto it = handlers.begin(); it != handlers.end(); ++it) 
             (*it)->write(a);
-        }
+
+        if (a != '\r' && a != '\n') 
+		_buff[at++] = a;
+
+        if ((a == '\n' && at) || at >= MAX_LOG_LINE) {
+
+		// Add ellipsis on overflow
+		if (a != '\n') {
+			at = MAX_LOG_LINE; 
+			_buff[at++] = '.';
+			_buff[at++] = '.';
+			_buff[at++] = '.';
+                };
+		_buff[at++] = '\0';
+		at = 0;
+
+//        	while(loopqueue.size() >= MAX_LOOP_QUEUE_LEN) loopqueue.erase(loopqueue.begin());
+// Assum earlier log lines are more important :)
+		if (loopqueue.size() < MAX_LOOP_QUEUE_LEN)
+		        loopqueue.push_back(String(_buff));
+	};
+
         if (_disableSerial)
             return 1;
+
         return Serial.write(a);
-    }
+    } // End of _dwrite();
 };
 
 extern TLog Log, Debug;

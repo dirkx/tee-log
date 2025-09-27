@@ -23,7 +23,12 @@
 #if (defined(ESP32) || defined(ESP8266))
 #include <PubSubClient.h>
 
+void MqttStream::stop() {
+	/* todo */
+};
+
 void MqttStream::begin() {
+    size_t max = 5 + 2 + strlen(_mqttTopic) + maxLine();
     if (!_mqtt) {
         if (!_mqttServer || !_mqttTopic || !_mqttPort) {
             Log.printf("Missing%s%s%s for MQTT Logging\n",
@@ -33,23 +38,32 @@ void MqttStream::begin() {
         
         PubSubClient * psc = new PubSubClient(*_client);
         psc->setServer(_mqttServer, _mqttPort);
-        psc->setBufferSize(sizeof(logbuff)+9+strlen(_mqttTopic));
+
+        if (psc->getBufferSize() < max)
+	        psc->setBufferSize(max);
         
-        Log.printf("Opened log on mqtt:://%s:%d/%s\n", _mqttServer, _mqttPort, _mqttTopic);
+        Log.printf("Opened log mqtt server on mqtt:://%s:%d#%s\n", _mqttServer, _mqttPort, _mqttTopic);
         _mqtt = psc;
         _mqtt->connect(_identifier);
+        _intSrv = true;
     } else {
         if (!_mqttTopic) {
             Log.printf("Missing topic for MQTT Logging\n");
             return;
         };
-        Log.printf("Opened mqtt log on topic %s\n", _mqttTopic);
+        if (_mqtt->getBufferSize() < max)
+	    Log.printf("Warniung - MQTT buffer too small for topic/payload with maximum lenght (%d+%d). Increase to at least %d bytes.\n",
+		strlen(_mqttTopic), maxLine(), max);
+        Log.printf("Opened mqtt log on topic #%s\n", _mqttTopic);
     };
     reconnect();
     loop();
 }
 
 void MqttStream::reconnect() {
+    if (!_intSrv)
+        return; // not our responsibility
+
     if (_mqtt->connect(_mqttTopic)) {
         Log.println("Log:: (re)connected to MQTT");
         return;
@@ -63,20 +77,42 @@ void MqttStream::loop() {
         return;
     
     _mqtt->loop();
+
     if (_mqtt->connected()) {
-        auto it = queue.begin();
-        while (it != queue.end()) {
-            _mqtt->publish(_mqttTopic ? _mqttTopic : "debug", it->c_str());
-            queue.erase(it++);
+        auto it = unsent.begin();
+	int i = 0;
+        while (it != unsent.end() && i++ < maxLine()) {
+#if 0
+   	    // We dup this - so it lives as long as mqtt needs to send this off.
+	    //
+	    if (buff) free(buff);
+	    buff = strdup(it->c_str());
+
+            it = unsent.erase(it);
+
+	    // Error out silently if there is no memory (as to not further yeapordise logging).
+	    if (!buff) return;
+
+	    // Remove the final LF - as MQTT is line oriented on message
+	    // level; and will usually show each message as a line.
+            //
+            size_t len = strlen(buff);
+	    while(len > 0 && ((buff[len-1] == '\n' || (buff[len-1] == '\r')))) { buff[len-1] = '\0'; len--; };
+
+
+            // Avoid sending empty messages - it seems to break some clients ??
+	    if (buff[0]) 
+       	      _mqtt->publish(_mqttTopic, buff); // it->c_str());
+#else
+	    _mqtt->publish(_mqttTopic, it->c_str());
+            it = unsent.erase(it);
+#endif
         };
         return;
     };
-    
-    // When we do not have the client handle - we're sharing a connection
-    // with something else. So no need to try to (re)connect, etc.
-    if (!_client)
-        return;
-    
+    if (!_intSrv)
+        return; // not our responsibility
+
     if (lst && millis() - lst < 15000)
         return;
     
@@ -84,23 +120,13 @@ void MqttStream::loop() {
     lst = millis();
 }
 
+void MqttStream::emitLastLine(String s) {
+    if (unsent.size() < MAX_MQTT_QUEUE)
+    	unsent.push_back(s);
+}
+
 size_t MqttStream::write(uint8_t c) {
-    if (at >= sizeof(logbuff)) {
-        Serial.println("Purged logbuffer (should never happen)");
-        at = 0;
-    };
-    
-    if (c >= 32 && c < 128)
-        logbuff[ at++ ] = c;
-    
-    if (c == '\n' || at >= sizeof(logbuff) - 1) {
-        logbuff[at++] = 0;
-        at = 0;
-        // Silently purge entries.
-        while(queue.size() >= MAX_MQTT_QUEUE)
-            queue.erase(queue.begin());
-        queue.push_back(String(logbuff));
-    };
+    // Ignore partial writes; wait for a full line before sending it.
     return 1;
 }
 #endif

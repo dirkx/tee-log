@@ -26,30 +26,35 @@
 #ifdef ESP32
 #include <WiFi.h>
 #include <ESPmDNS.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #endif
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-typedef ESP8266WebServer WebServer;
+#include <ESPAsyncWebServer.h>
 #endif
 
-
+class AsyncWebSocketWithData;
 class WebSerialStream : public LOGBase {
   public:
     WebSerialStream(const uint16_t webPort = 80, bool withMDNS = true) : _webPort(webPort), _withMDNS(withMDNS) {};
+    WebSerialStream(AsyncWebServer * webServer, String urlPrefix ) 
+		: _server(webServer), _prefix(urlPrefix) {  Serial.printf("WSS create %p\n", this); };
     ~WebSerialStream();
-    virtual size_t write(uint8_t c);
+
     virtual void begin();
     virtual void loop();
     virtual void stop();
+
+    virtual void emitLastLine(String s); 
+    virtual size_t write(uint8_t c);
   private:
-    uint16_t _webPort;
-    WebServer * _server = NULL;
-    uint8_t _buff[1024];
-    unsigned long _at = 0;
+    bool _intSrv = false;
+    uint16_t _webPort = 80;
+    AsyncWebServer * _server = NULL;
+    AsyncWebSocketWithData * _ws = NULL;
+    String _prefix = ""; // i.e. the /
     bool _withMDNS;
   protected:
 };

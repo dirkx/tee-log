@@ -19,5 +19,7 @@
 
 #include "TLog.h"
 
+void LOGBase::setTLog(TLog *p) { _tlog = p; };
+
 TLog Log("LOG");
 TLog Debug("DBG");
