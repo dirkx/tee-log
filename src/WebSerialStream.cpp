@@ -44,7 +44,6 @@ size_t WebSerialStream::write(uint8_t c) {
 
 WebSerialStream::~WebSerialStream() {
   stop();
- Serial.printf("WSS Destroy %p\n", this); 
 }
 
 

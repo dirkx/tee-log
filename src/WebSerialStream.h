@@ -40,7 +40,7 @@ class WebSerialStream : public LOGBase {
   public:
     WebSerialStream(const uint16_t webPort = 80, bool withMDNS = true) : _webPort(webPort), _withMDNS(withMDNS) {};
     WebSerialStream(AsyncWebServer * webServer, String urlPrefix ) 
-		: _server(webServer), _prefix(urlPrefix) {  Serial.printf("WSS create %p\n", this); };
+		: _server(webServer), _prefix(urlPrefix) {};
     ~WebSerialStream();
 
     virtual void begin();
