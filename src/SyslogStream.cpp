@@ -41,10 +41,15 @@ size_t SyslogStream::write(uint8_t c) {
       WiFiUDP syslog;
 
       if (syslog.begin(_syslogPort)) {
-        if (_dest)
-          syslog.beginPacket(_dest, _syslogPort);
-        else
+        if (_useIpDestination){
+          syslog.beginPacket(_destIp, _syslogPort);
+        }
+        else if (_destHost){
+          syslog.beginPacket(_destHost, _syslogPort);
+        }
+        else{
           syslog.beginPacket(WiFi.gatewayIP(), _syslogPort);
+        }
         if (_raw)
           syslog.printf("%s\n", logbuff);
         else {
