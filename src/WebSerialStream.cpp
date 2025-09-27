@@ -68,7 +68,9 @@ void WebSerialStream::begin() {
         if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
                 data[len] = 0;
 		if (strcmp((char*)data, "getHistory") == 0) {
+#ifdef ESP32
 		      std::lock_guard<std::mutex> lck(me->_tlog->_historyMutex);
+#endif
                       for(auto const line : *(me->_tlog->history())) {
                                 client->text(line + "\n");
 			}
@@ -107,6 +109,7 @@ void WebSerialStream::stop() {
 }
 
 void WebSerialStream::loop() {
-  _ws->cleanupClients();
+  if (_ws) 	
+	_ws->cleanupClients();
 }
 #endif

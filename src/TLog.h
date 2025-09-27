@@ -28,9 +28,9 @@
 #include <vector>
 #include <functional>
 #include <list>
-#include <mutex>
 
 #ifdef ESP32
+#include <mutex>
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #define IDENTIFIER_GENERATOR (WiFi.macAddress().c_str())
@@ -60,16 +60,20 @@ public:
     virtual void loop() { return; };
     virtual void stop() { return; };
     virtual void emitLastLine(String line) { return; };
-    
+
+    void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
+    size_t maxLine() { return MAX_LOG_LINE; };
 protected:
     char * _identifier;
     TLog * _tlog = NULL;
+    size_t MAX_LOG_LINE = 1200;
 
 friend TLog;
     // Small hack to allow for a single shared
     // line buffer across all writers.
     //
     void setTLog(TLog *p);
+
 };
 
 class TLog : public LOGBase
@@ -77,7 +81,7 @@ class TLog : public LOGBase
 public:
     TLog(): TLog(IDENTIFIER_GENERATOR) {};
     TLog(const char * identifier) : LOGBase(identifier) {
-	_buff = malloc(MAX_LOG_LINE);
+	_buff = (char*) malloc(MAX_LOG_LINE);
     };
     ~TLog() { free(_buff); };
 
@@ -111,7 +115,9 @@ public:
             		(*it)->emitLastLine(line);
 
 		{
+#ifdef ESP32
                  	std::lock_guard<std::mutex> lck(_historyMutex);
+#endif
 	        	while(queue.size() >= MAX_QUEUE_LEN)
             			queue.erase(queue.begin());
 			queue.push_back(line);
@@ -148,7 +154,9 @@ public:
     };
 
     // std::mutex historyMutex() { return _historyMutex; };
+#ifdef ESP32
     std::mutex _historyMutex;
+#endif
     std::list<String> * history() {
 	return & queue;
     };
@@ -156,7 +164,7 @@ public:
     void setMaxLine(size_t max) {
 	char * old = _buff;
 	MAX_LOG_LINE = max;
-	_buff = malloc(MAX_LOG_LINE);
+	_buff = (char *)malloc(MAX_LOG_LINE);
 	if (at) memcpy(_buff,old,at);
 	free(old);
     };
@@ -168,7 +176,6 @@ private:
     bool _disableSerial = false;
     bool _timestamp = false;
     byte lst = '\n';
-    size_t MAX_LOG_LINE = 1200;
     
     static const int MAX_QUEUE_LEN = 30;
     static const int MAX_LOOP_QUEUE_LEN = 7;

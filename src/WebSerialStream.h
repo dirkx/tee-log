@@ -39,7 +39,7 @@ class AsyncWebSocketWithData;
 class WebSerialStream : public LOGBase {
   public:
     WebSerialStream(const uint16_t webPort = 80) : 
-		_webPort(webPort) { Serial.printf("WSS create %p\n", this); };
+		_webPort(webPort) {};
     WebSerialStream(AsyncWebServer * webServer, String urlPrefix ) 
 		: _server(webServer), _prefix(urlPrefix) {  Serial.printf("WSS create %p\n", this); };
     ~WebSerialStream();

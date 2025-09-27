@@ -117,7 +117,9 @@ void TelnetSerialStream::loop() {
         // Catch up with any history we may have.
         //
        {	
+#ifdef ESP32
 		std::lock_guard<std::mutex> lck(_tlog->_historyMutex);
+#endif
         	for(auto const line : *(_tlog->history()))
 			_serverClients[i]->println(line);
 	};
