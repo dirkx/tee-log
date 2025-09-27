@@ -52,9 +52,9 @@ SyslogStream syslogStream = SyslogStream();
 //
 #ifdef MQTT_HOST
 #include <MqttlogStream.h>
-// EthernetClient client;
-WiFiClient client;
-MqttStream mqttStream = MqttStream(&client);
+// EthernetClient netClient;
+WiFiClient netClient;
+MqttStream mqttStream = MqttStream(netClient);
 char topic[128] = "log/foo";
 #endif
 

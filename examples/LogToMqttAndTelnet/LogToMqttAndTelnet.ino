@@ -39,7 +39,7 @@ TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 
 // EthernetClient client;
 WiFiClient client;
-MqttStream mqttStream = MqttStream(&client);
+MqttStream mqttStream = MqttStream(client);
 char topic[128] = "log/foo";
 
 void setup() {

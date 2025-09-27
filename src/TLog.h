@@ -157,6 +157,7 @@ public:
 
 #ifdef ESP32
     // std::mutex historyMutex() { return _historyMutex; };
+#endif
 #ifdef ESP32
     std::mutex _historyMutex;
 #endif
