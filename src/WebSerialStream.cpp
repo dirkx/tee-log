@@ -44,7 +44,6 @@ size_t WebSerialStream::write(uint8_t c) {
 
 WebSerialStream::~WebSerialStream() {
   stop();
- Serial.printf("WSS Destroy %p\n", this); 
 }
 
 
@@ -91,7 +90,9 @@ void WebSerialStream::begin() {
   if (_intSrv) {
     _server->begin();
     Log.printf("Opened serial web server on http://%s:%d%s\n", WiFi.localIP().toString().c_str(), _webPort, _prefix.c_str());
-    MDNS.addService("http", "tcp", _webPort);
+    if (_withMDNS) {
+        MDNS.addService("http", "tcp", _webPort);
+    }
   } else 
     Log.printf("Added serial web server on %s\n", _prefix.c_str());
 };

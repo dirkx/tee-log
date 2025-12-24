@@ -28,6 +28,9 @@
 #include <vector>
 #include <functional>
 #include <list>
+#ifdef ESP32
+#include <mutex>
+#endif
 
 #ifdef ESP32
 #include <mutex>
@@ -60,7 +63,6 @@ public:
     virtual void loop() { return; };
     virtual void stop() { return; };
     virtual void emitLastLine(String line) { return; };
-
     void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
     size_t maxLine() { return MAX_LOG_LINE; };
 protected:
@@ -153,7 +155,9 @@ public:
         return _dwrite(a);
     };
 
+#ifdef ESP32
     // std::mutex historyMutex() { return _historyMutex; };
+#endif
 #ifdef ESP32
     std::mutex _historyMutex;
 #endif
@@ -167,9 +171,6 @@ public:
 	_buff = (char *)malloc(MAX_LOG_LINE);
 	if (at) memcpy(_buff,old,at);
 	free(old);
-    };
-    size_t maxLine() {
-	return MAX_LOG_LINE;
     };
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
