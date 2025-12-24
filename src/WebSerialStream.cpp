@@ -53,14 +53,6 @@ size_t WebSerialStream::write(uint8_t c) {
   return 1;
 }
 
-<<<<<<< Updated upstream
-WebSerialStream::~WebSerialStream() {
-  stop();
-}
-
-=======
->>>>>>> Stashed changes
-
 void WebSerialStream::begin() {
   if (_server == NULL) {
   	_server = new AsyncWebServer(_webPort);

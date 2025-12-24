@@ -67,10 +67,7 @@ public:
     virtual void loop() { return; };
     virtual void stop() { return; };
     virtual void emitLastLine(String line) { return; };
-<<<<<<< Updated upstream
-    void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
-=======
->>>>>>> Stashed changes
+    // void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
     size_t maxLine() { return MAX_LOG_LINE; };
  protected:
      char * _identifier;
@@ -160,7 +157,7 @@ public:
           };
           if (_identifier) {
             char buff2[32];
-            size_t n = snprintf(buff2,sizeof(buff2)-1, "%s:", _identifier);
+            snprintf(buff2,sizeof(buff2)-1, "%s:", _identifier);
             for(char * p = buff2; *p; p++)
                 _dwrite(*p);
 	  };
@@ -170,16 +167,6 @@ public:
         return _dwrite(a);
     };
 
-<<<<<<< Updated upstream
-#ifdef ESP32
-    // std::mutex historyMutex() { return _historyMutex; };
-#endif
-#ifdef ESP32
-    std::mutex _historyMutex;
-#endif
-    std::list<String> * history() {
-	return & queue;
-=======
     size_t getNumberOfHistoryLines() {
 	size_t i = 0, n = 0;
 	char p;
@@ -188,7 +175,6 @@ public:
 			n++;
 	};
 	return n;
->>>>>>> Stashed changes
     };
 
     bool getHistoryLine(size_t age, char * buff) {
@@ -217,13 +203,7 @@ public:
 	};
         return false;
     };
-<<<<<<< Updated upstream
-=======
 
-    size_t maxLine() {
-	return MAX_LOG_LINE;
-    };
->>>>>>> Stashed changes
 private:
     std::vector<std::shared_ptr<LOGBase>> handlers;
     bool _disableSerial = false;
@@ -249,10 +229,10 @@ private:
         if (a != '\r' && a != '\n') 
 		_buff[at++] = a;
 
-        if ((a == '\n' && at) || (at >= MAX_LOG_LINE-4)) {
+        if ((a == '\n' && at) || (at >= MAX_LOG_LINE-2)) {
 		// Add ellipsis on overflow
 		if (a != '\n') {
-			at = MAX_LOG_LINE; 
+			at = MAX_LOG_LINE-5;
 			_buff[at++] = '.';
 			_buff[at++] = '.';
 			_buff[at++] = '.';
