@@ -103,7 +103,7 @@ void TelnetSerialStream::loop() {
           _serverClients[i] = NULL;
         };
 
-        _serverClients[i] = new WiFiClient(_server->available());
+        _serverClients[i] = new WiFiClient(_server->accept());
 
         _serverClients[i]->print("Telnet connection");
         if (_identifier && _identifier[0]) {
@@ -116,15 +116,11 @@ void TelnetSerialStream::loop() {
 	};
         _serverClients[i]->println();
 
-        // Catch up with any history we may have.
+        // Catch up with any history we may have buffered
         //
-       {	
-#ifdef ESP32
-		std::lock_guard<std::mutex> lck(_tlog->_historyMutex);
-#endif
-        	for(auto const line : *(_tlog->history()))
-			_serverClients[i]->println(line);
-	};
+	char line[ MAX_LOG_LINE ];
+	for(int j = 0;  _tlog->getHistoryLine(j, line); j++) 
+		_serverClients[i]->println(line);
 
         Log.print(_serverClients[i]->remoteIP());
         Log.print(":");
@@ -137,7 +133,7 @@ void TelnetSerialStream::loop() {
     if (i >= _maxClients) {
       //no free/disconnected spot so reject
       Log.println("Too many log/telnet clients. rejecting.");
-      _server->available().stop();
+      _server->accept().stop();
     }
   }
 

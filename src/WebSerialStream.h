@@ -49,6 +49,12 @@ class WebSerialStream : public LOGBase {
 
     virtual void emitLastLine(String s); 
     virtual size_t write(uint8_t c);
+
+    // somewhere near 35 browser or sender gets sick. not clear if this is volume 
+    // or line count. But sofar - lines seem to fix this 'better' than limiting
+    // total bytes sent in one pass.
+    //
+    static const size_t MAX_LINES_HISTORY = 25; 
   private:
     bool _intSrv = false;
     uint16_t _webPort = 80;

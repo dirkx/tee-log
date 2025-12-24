@@ -104,7 +104,15 @@ void MqttStream::loop() {
 	    if (buff[0]) 
        	      _mqtt->publish(_mqttTopic, buff); // it->c_str());
 #else
-	    _mqtt->publish(_mqttTopic, it->c_str());
+	    // use begin/end to avoid making an extra copy.
+	    // _mqtt->publish(_mqttTopic, it->c_str());
+	    const char * payload = it->c_str();
+            size_t len = strlen(payload);
+            if (len && _mqtt->beginPublish(_mqttTopic, len, false)) {
+                _mqtt->write((const uint8_t *)payload,len);
+                _mqtt->endPublish();
+	    };
+
             it = unsent.erase(it);
 #endif
         };

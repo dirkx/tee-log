@@ -1,3 +1,4 @@
+#if 0
 static const char page[] PROGMEM = R"(
 <html>
   <head>
@@ -40,5 +41,7 @@ static const char page[] PROGMEM = R"(
 	</body>
 </html>
 )";
-
-
+#else
+// Compressed version.
+static const char page[] PROGMEM = R"(<title>Log</title><style>#log{font-family:'Courier New',monospace;white-space:pre}</style><script>var ws,g="ws://"+location.host+"%s";function ol(e){initWebSocket()}function oO(e){ws.send("getHistory")}function oC(e){setTimeout(initWebSocket,2e3)}function oM(e){var n=window.innerHeight+window.pageYOffset>=document.body.offsetHeight-4;for(tag=document.getElementById("log");tag.innerHTML.length>5191680;)tag.innerHTML.slice(0,tag.innerHTML.indexOf("\n"));tag.innerHTML+=he(e.data),n&&window.scrollTo(0,document.body.scrollHeight)}function initWebSocket(){(ws=new WebSocket(g)).onopen=oO,ws.onclose=oC,ws.onmessage=oM}function he(e){const n={"<":"&lt;",">":"&gt;","&":"&amp;"};return e.replace(/<>&/,(function(e){return n[e]}))}window.addEventListener("load",ol);</script><div id=log></div>)";
+#endif

@@ -31,21 +31,35 @@ class AsyncWebSocketWithData : public AsyncWebSocket {
         private:
 		void * _d = NULL;
 };
+
+WebSerialStream::~WebSerialStream() {
+  stop();
+  delete _server;
+  _server = NULL;
+}
+
 // WebSerialStream * me = NULL;
 
 void WebSerialStream::emitLastLine(String line) {
-	if (_ws && _ws->count())
-		_ws->textAll(line + "\n");
+	if (!_ws)
+		return;
+	if (!_ws->count())
+		return;
+
+	_ws->textAll(line + "\n");
 };
 
 size_t WebSerialStream::write(uint8_t c) {
   return 1;
 }
 
+<<<<<<< Updated upstream
 WebSerialStream::~WebSerialStream() {
   stop();
 }
 
+=======
+>>>>>>> Stashed changes
 
 void WebSerialStream::begin() {
   if (_server == NULL) {
@@ -67,24 +81,37 @@ void WebSerialStream::begin() {
         if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
                 data[len] = 0;
 		if (strcmp((char*)data, "getHistory") == 0) {
-#ifdef ESP32
-		      std::lock_guard<std::mutex> lck(me->_tlog->_historyMutex);
-#endif
-                      for(auto const line : *(me->_tlog->history())) {
-                                client->text(line + "\n");
-			}
+
+			size_t n = me->_tlog->getNumberOfHistoryLines();
+			if (!n)
+				return; // nothing to do.
+
+			// Show up to the last M lines.
+			size_t m  = MAX_LINES_HISTORY;
+			if (n < m) 
+				m = n;
+
+			for(int i  = n - m; i < n; i++) {
+        			char line[ MAX_LOG_LINE + 2];
+
+				if (!me->_tlog->getHistoryLine(i, line))
+					return;
+
+				size_t l = strlen(line);
+				line[l++]='\n'; // terminator used by the javascript.
+				line[l++]='\0';
+
+               			client->text(line);
+			};
 		}
           }
   });
   _server->addHandler(_ws);
 
   _server->on(String(_prefix).c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
-     size_t len = strlen(page) + _prefix.length() + 3 + 1 + 1;;
-     char * buff = (char *)malloc(len);
-     len = snprintf(buff,len-1,page,String(_prefix+"/ws").c_str());
-     buff[len] = '\0';
-     request->send(200, "text/html", String(buff));
-     Log.printf("Weblog: %s %s %s\n", request->client()->localIP().toString().c_str(), "GET", request->url().c_str());
+     AsyncResponseStream* response = request->beginResponseStream("text/html");
+     response->printf(page,String(_prefix+"/ws").c_str());
+     request->send(response);
   });
 
   if (_intSrv) {
@@ -104,10 +131,9 @@ void WebSerialStream::stop() {
    };
   if (_server && _intSrv) {
      _server->end();
-     delete _server;
-     _server = NULL;
   };
 }
+
 
 void WebSerialStream::loop() {
   if (_ws) 	
