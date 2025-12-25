@@ -34,36 +34,35 @@
 // the serial log output.
 //
 #include <TelnetSerialStream.h>
-TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 
 // Likewise let http://<ipaddres>:80/ show the log in a webbrowser.
 //
 #include <WebSerialStream.h>
-WebSerialStream webSerialStream = WebSerialStream();
 
 // Only send it to syslog if we have a host defined.
 //
 #ifdef SYSLOG_HOST
 #include <SyslogStream.h>
-SyslogStream syslogStream = SyslogStream();
+SyslogStream syslogStream;
 #endif
 
 // Only send it to MQTT if we have a host defined
 //
 #ifdef MQTT_HOST
 #include <MqttlogStream.h>
+// Client netClient;
 // EthernetClient netClient;
 WiFiClient netClient;
-MqttStream mqttStream = MqttStream(netClient);
-char topic[128] = "log/foo";
+MqttStream mqttStream(netClient);
+char topic[] = "log/chatty-server";
 #endif
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Started (this will only show up on serial)");
 
-  Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
-  Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+  Log.addPrintStream(std::make_shared<TelnetSerialStream>());
+  Log.addPrintStream(std::make_shared<WebSerialStream>());
 
   WiFi.begin(WIFI_NETWORK, WIFI_PASSWD);
   while(!WiFi.isConnected()) {
@@ -76,6 +75,7 @@ void setup() {
 #ifdef SYSLOG_HOST
   syslogStream.setDestination(SYSLOG_HOST);
   syslogStream.setRaw(false); // wether or not the syslog server is a modern(ish) unix.
+
 #ifdef SYSLOG_PORT
   syslogStream.setPort(SYSLOG_PORT);
 #endif

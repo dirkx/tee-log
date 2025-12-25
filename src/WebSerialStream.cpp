@@ -40,13 +40,13 @@ WebSerialStream::~WebSerialStream() {
 
 // WebSerialStream * me = NULL;
 
-void WebSerialStream::emitLastLine(String line) {
+void WebSerialStream::emitLastLine(const char *line) {
 	if (!_ws)
 		return;
 	if (!_ws->count())
 		return;
 
-	_ws->textAll(line + "\n");
+	_ws->textAll(line);
 };
 
 size_t WebSerialStream::write(uint8_t c) {
@@ -79,19 +79,16 @@ void WebSerialStream::begin() {
 				return; // nothing to do.
 
 			// Show up to the last M lines.
+			//
 			size_t m  = MAX_LINES_HISTORY;
 			if (n < m) 
 				m = n;
 
 			for(int i  = n - m; i < n; i++) {
-        			char line[ MAX_LOG_LINE + 2];
+        			char line[ MAX_LOG_LINE];
 
 				if (!me->_tlog->getHistoryLine(i, line))
 					return;
-
-				size_t l = strlen(line);
-				line[l++]='\n'; // terminator used by the javascript.
-				line[l++]='\0';
 
                			client->text(line);
 			};

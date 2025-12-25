@@ -66,7 +66,7 @@ public:
     virtual void reconnect() { return; };
     virtual void loop() { return; };
     virtual void stop() { return; };
-    virtual void emitLastLine(String line) { return; };
+    virtual void emitLastLine(const char *line) { return; };
     // void setMaxLine(size_t max) { MAX_LOG_LINE = max; }; 
     size_t maxLine() { return MAX_LOG_LINE; };
  protected:

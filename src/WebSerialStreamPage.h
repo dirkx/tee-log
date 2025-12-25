@@ -21,7 +21,7 @@ static const char page[] PROGMEM = R"(
          while (tag.innerHTML.length > 1014*1024*5) {
  		tag.innerHTML.slice(0, tag.innerHTML.indexOf("\n"));
 	 };
- 	 tag.innerHTML += htmlenc(event.data);
+ 	 tag.innerHTML += htmlenc(event.data) + "\n";
          if (isAtEnd) 
 		window.scrollTo(0,document.body.scrollHeight); 
      }
@@ -43,5 +43,5 @@ static const char page[] PROGMEM = R"(
 )";
 #else
 // Compressed version.
-static const char page[] PROGMEM = R"(<title>Log</title><style>#log{font-family:'Courier New',monospace;white-space:pre}</style><script>var ws,g="ws://"+location.host+"%s";function ol(e){initWebSocket()}function oO(e){ws.send("getHistory")}function oC(e){setTimeout(initWebSocket,2e3)}function oM(e){var n=window.innerHeight+window.pageYOffset>=document.body.offsetHeight-4;for(tag=document.getElementById("log");tag.innerHTML.length>5191680;)tag.innerHTML.slice(0,tag.innerHTML.indexOf("\n"));tag.innerHTML+=he(e.data),n&&window.scrollTo(0,document.body.scrollHeight)}function initWebSocket(){(ws=new WebSocket(g)).onopen=oO,ws.onclose=oC,ws.onmessage=oM}function he(e){const n={"<":"&lt;",">":"&gt;","&":"&amp;"};return e.replace(/<>&/,(function(e){return n[e]}))}window.addEventListener("load",ol);</script><div id=log></div>)";
+static const char page[] PROGMEM = R"(<title>Log</title><style>#log{font-family:'Courier New',monospace;white-space:pre}</style><script>var ws,g="ws://"+location.host+"%s";function ol(e){initWebSocket()}function oO(e){ws.send("getHistory")}function oC(e){setTimeout(initWebSocket,2e3)}function oM(e){var n=window.innerHeight+window.pageYOffset>=document.body.offsetHeight-4;for(tag=document.getElementById("log");tag.innerHTML.length>5191680;)tag.innerHTML.slice(0,tag.innerHTML.indexOf("\n"));tag.innerHTML+=he(e.data)+"\n",n&&window.scrollTo(0,document.body.scrollHeight)}function initWebSocket(){(ws=new WebSocket(g)).onopen=oO,ws.onclose=oC,ws.onmessage=oM}function he(e){const n={"<":"&lt;",">":"&gt;","&":"&amp;"};return e.replace(/<>&/,(function(e){return n[e]}))}window.addEventListener("load",ol);</script><div id=log></div>)";
 #endif

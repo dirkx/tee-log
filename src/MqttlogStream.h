@@ -40,24 +40,36 @@ class MqttStream : public LOGBase {
   public:
     MqttStream(Client & client, char * mqttServer = NULL, char * mqttTopic = NULL, const uint16_t mqttPort = 1883) :
       _client(&client), _mqttPort(mqttPort) {
-      if (mqttServer) _mqttServer = strdup(mqttServer);
-      if (mqttTopic) _mqttTopic = strdup(mqttTopic);
+      setServer(mqttServer);
+      setTopic(mqttTopic);
     };
     MqttStream(PubSubClient & pubsub, char * mqttTopic = NULL) : _client(), _mqtt(&pubsub) {
-      if (mqttTopic) _mqttTopic = strdup(mqttTopic);
+      setTopic(mqttTopic);
     };
-    ~MqttStream() { if (buff) free(buff); buff = NULL; stop(); };
+    ~MqttStream() { 
+      stop(); 
+      if (_mqttTopic)
+        free(_mqttTopic);
+      if (_mqttServer)
+        free(_mqttServer);
+    };
 
     void setPort(uint16_t port) {
       _mqttPort = port;
     }
 
     void setTopic(const char * topic) {
+      if (_mqttTopic)
+        free(_mqttTopic);
+      *_mqttTopic = 0;
       if (topic)
         _mqttTopic = strdup(topic);
     }
 
     void setServer(const char * server) {
+      if (_mqttServer)
+        free(_mqttServer);
+      *_mqttServer = 0;
       if (server)
         _mqttServer = strdup(server);
     }
@@ -67,15 +79,16 @@ class MqttStream : public LOGBase {
     virtual void stop();
     virtual void loop();
     virtual void reconnect();
-    virtual void emitLastLine(String s);
+    virtual void emitLastLine(const char *);
 
   private:
     Client  *_client = NULL;
     PubSubClient * _mqtt = NULL;
-    const char * _mqttServer = NULL, * _mqttTopic = NULL;
+    char * _mqttServer = NULL, * _mqttTopic = NULL;
     uint16_t _mqttPort = 0;
+#ifdef MQTT_DEFER
     std::list<String> unsent;
-    char * buff = NULL;
+#endif
     bool _intSrv = false;
   protected:
 };

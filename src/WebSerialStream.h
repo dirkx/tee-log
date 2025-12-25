@@ -47,7 +47,7 @@ class WebSerialStream : public LOGBase {
     virtual void loop();
     virtual void stop();
 
-    virtual void emitLastLine(String s); 
+    virtual void emitLastLine(const char *s); 
     virtual size_t write(uint8_t c);
 
     // somewhere near 35 browser or sender gets sick. not clear if this is volume 

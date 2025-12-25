@@ -72,38 +72,15 @@ void MqttStream::reconnect() {
 }
 
 void MqttStream::loop() {
-    static unsigned long lst = 0;
     if (!_mqtt)
         return;
     
     _mqtt->loop();
-
     if (_mqtt->connected()) {
+#ifdef MQTT_DEFER
         auto it = unsent.begin();
 	int i = 0;
         while (it != unsent.end() && i++ < maxLine()) {
-#if 0
-   	    // We dup this - so it lives as long as mqtt needs to send this off.
-	    //
-	    if (buff) free(buff);
-	    buff = strdup(it->c_str());
-
-            it = unsent.erase(it);
-
-	    // Error out silently if there is no memory (as to not further yeapordise logging).
-	    if (!buff) return;
-
-	    // Remove the final LF - as MQTT is line oriented on message
-	    // level; and will usually show each message as a line.
-            //
-            size_t len = strlen(buff);
-	    while(len > 0 && ((buff[len-1] == '\n' || (buff[len-1] == '\r')))) { buff[len-1] = '\0'; len--; };
-
-
-            // Avoid sending empty messages - it seems to break some clients ??
-	    if (buff[0]) 
-       	      _mqtt->publish(_mqttTopic, buff); // it->c_str());
-#else
 	    // use begin/end to avoid making an extra copy.
 	    // _mqtt->publish(_mqttTopic, it->c_str());
 	    const char * payload = it->c_str();
@@ -114,13 +91,18 @@ void MqttStream::loop() {
 	    };
 
             it = unsent.erase(it);
+        }
 #endif
-        };
+        // we are still connected.
         return;
     };
+    // we are not connected.
+    //
     if (!_intSrv)
         return; // not our responsibility
 
+    // Try to (re)connect every 15 seconds if we are not connected.
+    static unsigned long lst = 0;
     if (lst && millis() - lst < 15000)
         return;
     
@@ -128,9 +110,17 @@ void MqttStream::loop() {
     lst = millis();
 }
 
-void MqttStream::emitLastLine(String s) {
+void MqttStream::emitLastLine(const char * line) {
+#ifdef MQTT_DEFER
     if (unsent.size() < MAX_MQTT_QUEUE)
     	unsent.push_back(s);
+#else
+    size_t len = strlen(line);
+    if (len && _mqtt->beginPublish(_mqttTopic, len, false)) {
+           _mqtt->write((const uint8_t *)line,len);
+           _mqtt->endPublish();
+    };
+#endif
 }
 
 size_t MqttStream::write(uint8_t c) {
