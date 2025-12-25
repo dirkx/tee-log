@@ -43,7 +43,7 @@ class MqttStream : public LOGBase {
       setServer(mqttServer);
       setTopic(mqttTopic);
     };
-    MqttStream(PubSubClient & pubsub, char * mqttTopic = NULL) : _client(), _mqtt(&pubsub) {
+    MqttStream(PubSubClient & pubsub, char * mqttTopic = NULL) : _mqtt(&pubsub) {
       setTopic(mqttTopic);
     };
     ~MqttStream() { 
@@ -61,7 +61,7 @@ class MqttStream : public LOGBase {
     void setTopic(const char * topic) {
       if (_mqttTopic)
         free(_mqttTopic);
-      *_mqttTopic = 0;
+      _mqttTopic = NULL;
       if (topic)
         _mqttTopic = strdup(topic);
     }
@@ -69,7 +69,7 @@ class MqttStream : public LOGBase {
     void setServer(const char * server) {
       if (_mqttServer)
         free(_mqttServer);
-      *_mqttServer = 0;
+      _mqttServer = NULL;
       if (server)
         _mqttServer = strdup(server);
     }
